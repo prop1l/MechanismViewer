@@ -1,0 +1,79 @@
+{
+  "id": "button-rack-pinion",
+  "name": "Кнопка с реечным поворотом стрелки",
+  "category": "Кнопки и толкатели",
+  "description": "Нажатие кнопки на 8 мм через рейку на толкателе поворачивает шестерню m1 z12 со стрелкой на 76°. Возвращает кнопку пружина сжатия.",
+
+  "motion": { "input": "linear", "output": "rotation" },
+  "specs": { "strokeMm": 8, "angleDeg": 76.4, "maxTorqueNm": 0.01 },
+  "envelopeMm": [44, 54, 14],
+
+  // Пружина 0,2 Н/мм с предварительным поджатием 0,5 Н; палец давит с силой 3 Н.
+  "driver": {
+    "type": "button",
+    "part": "button",
+    "range": [0, 8],
+    "handForce": 3,
+    "spring": { "stiffness": 0.2, "preload": 0.5 }
+  },
+  "output": "pinion",
+
+  "parts": [
+    {
+      "id": "button",
+      "name": "Кнопка с толкателем",
+      "stl": "Button.stl",
+      "color": "#D9534F",
+      // Нажатие — вниз (−Y).
+      "joint": { "type": "prismatic", "origin": [0, 0, 0], "axis": [0, -1, 0] },
+      "massKg": 0.0025
+    },
+    {
+      "id": "pinion",
+      "name": "Шестерня со стрелкой",
+      "stl": "Pinion.stl",
+      "color": "#FFA500",
+      // В STL впадина зубьев стоит слева (180°), напротив рейки толкателя.
+      "joint": { "type": "revolute", "origin": [9, 15, 0], "axis": [0, 0, 1] },
+      "gear": { "teeth": 12, "pitchRadiusMm": 6, "rootRadiusMm": 4.75, "thicknessMm": 6 },
+      "inertiaKgM2": 3.5e-8
+    },
+    {
+      "id": "spring",
+      "name": "Пружина сжатия",
+      "stl": "Spring.stl",
+      "color": "#C8CCD2",
+      "joint": {
+        "type": "link",
+        "axis": [0, 0, 1],
+        "link": { "from": "housing", "fromPoint": [0, -14, 3], "to": "button", "toPoint": [0, 0, 3], "stretchLengthMm": 14 }
+      }
+    },
+    {
+      "id": "housing",
+      "name": "Корпус",
+      "stl": "Housing.stl",
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    { "type": "rack", "from": "button", "to": "pinion" }
+  ],
+
+  "fasteners": [
+    { "kind": "Пружина сжатия", "size": "Ø7×14, 0,2 Н/мм", "type": "spring", "attachedTo": "spring", "note": "показана как деталь «Пружина сжатия»" },
+    { "kind": "Ось шестерни", "size": "Ø5×11", "type": "pin", "attachedTo": "pinion", "note": "в модели — ступица шестерни" },
+    {
+      "kind": "Саморез крепления корпуса",
+      "size": "2,2×6",
+      "type": "self-tapping",
+      "diameterMm": 2.2,
+      "lengthMm": 6,
+      // В лицевую сторону задней стенки (z = −2), вне хода стрелки.
+      "positions": [[28, 26, -2], [28, -15, -2]],
+      "axis": [0, 0, -1],
+      "attachedTo": "housing"
+    }
+  ]
+}

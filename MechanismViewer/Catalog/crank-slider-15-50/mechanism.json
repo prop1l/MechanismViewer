@@ -1,0 +1,74 @@
+{
+  "id": "crank-slider-15-50",
+  "name": "Кривошипно-ползунный механизм 15/50",
+  "category": "Рычажные механизмы",
+  "description": "Кривошип 15 мм на валу мотора, шатун 50 мм, ползун в направляющих. Превращает вращение в возвратно-поступательное движение с ходом 30 мм.",
+
+  "motion": { "input": "rotation", "output": "linear" },
+  "specs": { "strokeMm": 30, "maxForceN": 0.4, "maxSpeedRadS": 20 },
+  "envelopeMm": [105, 50, 60],
+
+  "driver": { "type": "motor", "part": "crank", "motorGapMm": 6.0 },
+  "output": "slider",
+
+  "parts": [
+    {
+      "id": "crank",
+      "name": "Кривошип",
+      "stl": "Crank.stl",
+      "color": "#4682B4",
+      // Угол 0° — палец кривошипа на оси ползуна (+X).
+      "joint": { "type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1], "phase": 0 },
+      // Ступица + плечо + бобышка с пальцем, PLA.
+      "inertiaKgM2": 1.6e-7
+    },
+    {
+      "id": "slider",
+      "name": "Ползун",
+      "stl": "Slider.stl",
+      "color": "#FFA500",
+      // При угле кривошипа 0° палец ползуна на r + L = 65 мм от оси.
+      "joint": { "type": "prismatic", "origin": [65, 0, 0], "axis": [1, 0, 0], "phase": 0 },
+      // Ползун + половина массы шатуна.
+      "massKg": 0.0031
+    },
+    {
+      "id": "rod",
+      "name": "Шатун",
+      "stl": "Rod.stl",
+      "color": "#B0B7C0",
+      "joint": {
+        "type": "link",
+        "axis": [0, 0, 1],
+        "link": { "from": "crank", "fromPoint": [15, 0, 0], "to": "slider", "toPoint": [0, 0, 0] }
+      }
+    },
+    {
+      "id": "guide",
+      "name": "Направляющие",
+      "stl": "Guide.stl",
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    { "type": "crank-slider", "from": "crank", "to": "slider", "crankMm": 15, "rodMm": 50, "offsetMm": 0 }
+  ],
+
+  "fasteners": [
+    { "kind": "Палец кривошипа (ось шарнира)", "size": "Ø4×10", "type": "pin", "attachedTo": "crank", "note": "в модели — часть кривошипа" },
+    { "kind": "Палец ползуна (ось шарнира)", "size": "Ø4×10", "type": "pin", "attachedTo": "slider", "note": "в модели — часть ползуна" },
+    { "kind": "Стопорный винт ступицы", "size": "M3×4", "type": "set-screw", "attachedTo": "crank", "note": "входит в модель мотора" },
+    {
+      "kind": "Винт крепления направляющих",
+      "size": "M3×8",
+      "type": "socket-screw",
+      "diameterMm": 3,
+      "lengthMm": 8,
+      // Между рельсами, вне хода пальца ползуна (x 33…67); головки ниже шатуна.
+      "positions": [[30, 4.5, 2], [30, -4.5, 2], [80, 4.5, 2], [80, -4.5, 2]],
+      "axis": [0, 0, -1],
+      "attachedTo": "guide"
+    }
+  ]
+}

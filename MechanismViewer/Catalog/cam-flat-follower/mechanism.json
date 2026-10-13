@@ -1,0 +1,67 @@
+{
+  "id": "cam-flat-follower",
+  "name": "Кулачок с плоским толкателем",
+  "category": "Кулачковые механизмы",
+  "description": "Дисковый кулачок (базовый радиус 15 мм) поднимает плоский толкатель на 12 мм по циклоидальному закону: подъём 150°, выстой 30°, опускание 150°, выстой 30°. Закон без ударов по ускорению.",
+
+  "motion": { "input": "rotation", "output": "linear" },
+  "specs": { "strokeMm": 12, "maxForceN": 2, "maxSpeedRadS": 20 },
+  "envelopeMm": [54, 104, 80],
+
+  "driver": { "type": "motor", "part": "cam", "motorGapMm": 6.0 },
+  "output": "follower",
+
+  "parts": [
+    {
+      "id": "cam",
+      "name": "Кулачок",
+      "stl": "Cam.stl",
+      "color": "#4682B4",
+      "joint": { "type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1], "phase": 0 },
+      "inertiaKgM2": 1.9e-6
+    },
+    {
+      "id": "follower",
+      "name": "Толкатель",
+      "stl": "Follower.stl",
+      "color": "#FFA500",
+      // Тарелка толкателя лежит на базовой окружности (15 мм) над осью кулачка.
+      "joint": { "type": "prismatic", "origin": [0, 15, 0], "axis": [0, 1, 0] },
+      "massKg": 0.003
+    },
+    {
+      "id": "frame",
+      "name": "Направляющая толкателя",
+      "stl": "Frame.stl",
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    {
+      "type": "cam",
+      "from": "cam",
+      "to": "follower",
+      "segments": [
+        { "angleDeg": 150, "riseMm": 12, "law": "cycloidal" },
+        { "angleDeg": 30 },
+        { "angleDeg": 150, "riseMm": -12, "law": "cycloidal" },
+        { "angleDeg": 30 }
+      ]
+    }
+  ],
+
+  "fasteners": [
+    { "kind": "Пружина прижима толкателя", "size": "Ø8×25", "type": "spring", "attachedTo": "follower", "note": "в модели не показана: контакт обеспечивает кинематика" },
+    {
+      "kind": "Винт крепления направляющей",
+      "size": "M3×8",
+      "type": "socket-screw",
+      "diameterMm": 3,
+      "lengthMm": 8,
+      "positions": [[-18, 22, -2], [18, 22, -2]],
+      "axis": [0, 0, -1],
+      "attachedTo": "frame"
+    }
+  ]
+}

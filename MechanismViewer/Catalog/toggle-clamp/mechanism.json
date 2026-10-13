@@ -1,0 +1,70 @@
+{
+  "id": "toggle-clamp",
+  "name": "Рычажный зажим с коленом",
+  "category": "Зажимы и фиксаторы",
+  "description": "Рукоятка через тягу выдвигает плунжер на 31 мм к упору. У мёртвой точки (рукоятка почти вдоль плунжера) выигрыш в силе растёт многократно, и зажим держит деталь сам.",
+
+  "motion": { "input": "rotation", "output": "linear" },
+  "specs": { "strokeMm": 31, "angleDeg": 107, "maxForceN": 200 },
+  "envelopeMm": [152, 115, 18],
+
+  // Рукоятка ходит от 110° (открыто) до 3° — за 3° до мёртвой точки; рука — до 2 Н·м (≈ 22 Н на рукояти).
+  "driver": { "type": "lever", "part": "handle", "range": [-107, 0], "handForce": 2 },
+  "output": "plunger",
+
+  "parts": [
+    {
+      "id": "handle",
+      "name": "Рукоятка",
+      "stl": "Handle.stl",
+      "color": "#D9534F",
+      "joint": { "type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1], "phase": 110 },
+      "inertiaKgM2": 3e-5
+    },
+    {
+      "id": "plunger",
+      "name": "Плунжер",
+      "stl": "Plunger.stl",
+      "color": "#FFA500",
+      // При рукоятке на 110°: x = 20·cos 110° + √(45² − (20·sin 110°)²) = 34,05 мм.
+      "joint": { "type": "prismatic", "origin": [34.047, 0, 0], "axis": [1, 0, 0] },
+      "massKg": 0.01
+    },
+    {
+      "id": "link",
+      "name": "Тяга",
+      "stl": "Link.stl",
+      "color": "#B0B7C0",
+      "joint": {
+        "type": "link",
+        "axis": [0, 0, 1],
+        "link": { "from": "handle", "fromPoint": [20, 0, 0], "to": "plunger", "toPoint": [0, 0, 0] }
+      }
+    },
+    {
+      "id": "frame",
+      "name": "Основание с направляющей и упором",
+      "stl": "Frame.stl",
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    { "type": "crank-slider", "from": "handle", "to": "plunger", "crankMm": 20, "rodMm": 45, "offsetMm": 0 }
+  ],
+
+  "fasteners": [
+    { "kind": "Ось рукоятки", "size": "Ø6×12", "type": "pin", "attachedTo": "handle", "note": "только в спецификации" },
+    { "kind": "Палец тяги", "size": "Ø4×10", "type": "pin", "attachedTo": "handle", "count": 2, "note": "в модели — часть рукоятки и плунжера" },
+    {
+      "kind": "Винт крепления основания",
+      "size": "M4×10",
+      "type": "socket-screw",
+      "diameterMm": 4,
+      "lengthMm": 10,
+      "positions": [[-10, -15, -2], [60, -17, -2], [125, -15, -2], [125, 15, -2]],
+      "axis": [0, 0, -1],
+      "attachedTo": "frame"
+    }
+  ]
+}

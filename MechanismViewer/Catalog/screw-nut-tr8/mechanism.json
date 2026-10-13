@@ -1,0 +1,71 @@
+{
+  "id": "screw-nut-tr8",
+  "name": "Ходовой винт Tr8×2 с гайкой-кареткой",
+  "category": "Винтовые передачи",
+  "description": "Мотор вращает трапецеидальный винт Tr8×2, гайка-каретка едет по направляющей на 50 мм и на концах хода разворачивается. Самотормозящая передача: держит нагрузку без питания.",
+
+  "motion": { "input": "rotation", "output": "linear" },
+  "specs": { "strokeMm": 50, "maxForceN": 100, "maxSpeedRadS": 30 },
+  "envelopeMm": [40, 54, 154],
+
+  // 50 мм хода / 2 мм на оборот = 25 оборотов = 9000°; на упорах мотор реверсируется.
+  "driver": { "type": "motor", "part": "screw", "motorGapMm": 6.0, "range": [0, 9000], "reverseAtLimits": true },
+  "output": "nut",
+
+  "parts": [
+    {
+      "id": "screw",
+      "name": "Винт Tr8×2",
+      "stl": "Screw.stl",
+      "color": "#B8BEC6",
+      "joint": { "type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1] },
+      // Сталь, Ø8×72.
+      "inertiaKgM2": 2.3e-7
+    },
+    {
+      "id": "nut",
+      "name": "Гайка-каретка",
+      "stl": "Nut.stl",
+      "color": "#FFA500",
+      // Стартует у дальнего конца; правая резьба при вращении «вперёд» тянет гайку к мотору.
+      "joint": { "type": "prismatic", "origin": [0, 0, 62], "axis": [0, 0, 1] },
+      "massKg": 0.008,
+      // Трение скольжения в резьбе — основная потеря винтовой пары.
+      "coulombFriction": 1.5
+    },
+    {
+      "id": "frame",
+      "name": "Основание, опора и направляющая",
+      "stl": "Frame.stl",
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    { "type": "screw", "from": "screw", "to": "nut", "leadMm": -2 }
+  ],
+
+  "fasteners": [
+    { "kind": "Муфта вала мотора с винтом", "size": "5×8", "attachedTo": "screw", "note": "входит в модель мотора (ступица)" },
+    {
+      "kind": "Винт крепления гайки к каретке",
+      "size": "M3×8",
+      "type": "socket-screw",
+      "diameterMm": 3,
+      "lengthMm": 8,
+      "positions": [[-7, -4, 6], [7, -4, 6]],
+      "axis": [0, 0, -1],
+      "attachedTo": "nut"
+    },
+    {
+      "kind": "Винт крепления торцевой опоры",
+      "size": "M3×12",
+      "type": "socket-screw",
+      "diameterMm": 3,
+      "lengthMm": 12,
+      "positions": [[-7, -15, 82], [7, -15, 82]],
+      "axis": [0, 0, -1],
+      "attachedTo": "frame"
+    }
+  ]
+}

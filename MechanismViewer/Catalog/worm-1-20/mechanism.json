@@ -1,0 +1,60 @@
+{
+  "id": "worm-1-20",
+  "name": "Червячная пара 1:20",
+  "category": "Зубчатые передачи",
+  "description": "Однозаходный червяк m1,5 на валу мотора вращает колесо z20 вокруг перпендикулярной оси. Большое понижение в одной ступени; при малом угле подъёма витка передача самотормозящая.",
+
+  "motion": { "input": "rotation", "output": "rotation" },
+  "specs": { "ratio": 0.05, "maxTorqueNm": 0.12, "maxSpeedRadS": 40 },
+  "envelopeMm": [44, 63, 120],
+
+  "driver": { "type": "motor", "part": "worm", "motorGapMm": 6.0 },
+  "output": "wheel",
+
+  "parts": [
+    {
+      "id": "worm",
+      "name": "Червяк",
+      "stl": "Worm.stl",
+      "color": "#4682B4",
+      "joint": { "type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1] },
+      "inertiaKgM2": 1.9e-7
+    },
+    {
+      "id": "wheel",
+      "name": "Червячное колесо z20",
+      "stl": "Wheel.stl",
+      "color": "#FFA500",
+      // Межосевое 7,5 + 15 = 22,5 мм, колесо над серединой червяка.
+      "joint": { "type": "revolute", "origin": [0, 22.5, 21], "axis": [1, 0, 0] },
+      "inertiaKgM2": 1.0e-6,
+      "coulombFriction": 2e-4
+    },
+    {
+      "id": "frame",
+      "name": "Основание и стойки",
+      "stl": "Frame.stl",
+      "color": "#5A606A"
+    }
+  ],
+
+  // Один оборот червяка — один зуб колеса (1/20 оборота).
+  "couplings": [
+    { "type": "gear", "from": "worm", "to": "wheel", "ratio": 0.05 }
+  ],
+
+  "fasteners": [
+    { "kind": "Ось колеса", "size": "Ø6×30", "type": "pin", "attachedTo": "wheel", "note": "в модели — часть колеса" },
+    { "kind": "Стопорный винт ступицы колеса", "size": "M3×4", "type": "set-screw", "attachedTo": "wheel", "note": "только в спецификации" },
+    {
+      "kind": "Винт крепления стоек",
+      "size": "M3×10",
+      "type": "socket-screw",
+      "diameterMm": 3,
+      "lengthMm": 10,
+      "positions": [[12, 26, 21], [-12, 26, 21]],
+      "axis": [0, -1, 0],
+      "attachedTo": "frame"
+    }
+  ]
+}

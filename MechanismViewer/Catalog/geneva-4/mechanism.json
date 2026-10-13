@@ -1,0 +1,60 @@
+{
+  "id": "geneva-4",
+  "name": "Мальтийский крест на 4 паза",
+  "category": "Механизмы прерывистого движения",
+  "description": "Палец ведущего диска за каждый оборот поворачивает крест на 90° за четверть оборота, остальные три четверти крест заперт дугой диска. Вход и выход пальца из паза — без удара.",
+
+  "motion": { "input": "rotation", "output": "intermittent" },
+  "specs": { "angleDeg": 90, "maxTorqueNm": 0.02, "maxSpeedRadS": 15 },
+  "envelopeMm": [106, 64, 83],
+
+  "driver": { "type": "motor", "part": "driver", "motorGapMm": 6.0 },
+  "output": "star",
+
+  "parts": [
+    {
+      "id": "driver",
+      "name": "Ведущий диск с пальцем",
+      "stl": "Driver.stl",
+      "color": "#4682B4",
+      // Палец (локальная +X) смотрит от креста: старт в фазе выстоя.
+      "joint": { "type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1], "phase": 180 },
+      "inertiaKgM2": 4.5e-6
+    },
+    {
+      "id": "star",
+      "name": "Крест",
+      "stl": "Star.stl",
+      "color": "#FFA500",
+      // Межосевое 40 мм; пазы на 45° + 90°·k, запирающая дуга обращена к ведущему диску.
+      "joint": { "type": "revolute", "origin": [40, 0, 0], "axis": [0, 0, 1], "phase": 0 },
+      "inertiaKgM2": 3.0e-6,
+      "coulombFriction": 1e-4
+    },
+    {
+      "id": "frame",
+      "name": "Основание",
+      "stl": "Frame.stl",
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    { "type": "geneva", "from": "driver", "to": "star", "slots": 4 }
+  ],
+
+  "fasteners": [
+    { "kind": "Палец ведущего диска", "size": "Ø6×12", "type": "pin", "attachedTo": "driver", "note": "в модели — часть диска" },
+    { "kind": "Ось креста", "size": "Ø6×16", "type": "pin", "attachedTo": "star", "note": "только в спецификации" },
+    {
+      "kind": "Винт крепления основания",
+      "size": "M3×8",
+      "type": "socket-screw",
+      "diameterMm": 3,
+      "lengthMm": 8,
+      "positions": [[70, 25, -2], [70, -25, -2]],
+      "axis": [0, 0, -1],
+      "attachedTo": "frame"
+    }
+  ]
+}

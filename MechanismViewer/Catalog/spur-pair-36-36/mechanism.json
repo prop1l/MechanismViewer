@@ -1,0 +1,45 @@
+{
+  "id": "spur-pair-36-36",
+  "name": "Цилиндрическая прямозубая пара 36/36",
+  "category": "Зубчатые передачи",
+  "description": "Две одинаковые шестерни (PLA) на неподвижных осях, ведущая — на валу мотора «380». Передаёт вращение 1:1 со сменой направления.",
+
+  "motion": { "input": "rotation", "output": "rotation" },
+  "specs": { "ratio": 1.0, "maxTorqueNm": 0.01, "maxSpeedRadS": 30 },
+  "envelopeMm": [82, 50, 52],
+
+  "driver": { "type": "motor", "part": "gearA", "motorGapMm": 6.0 },
+  "output": "gearB",
+
+  "parts": [
+    {
+      "id": "gearA",
+      "name": "Gear A",
+      "stl": "GearA2.stl",
+      "color": "#4682B4",
+      // Минимальное межосевое без пересечения зубьев ≈ 39,2 мм; 39,3 — с боковым зазором 0,1 мм.
+      "joint": { "type": "revolute", "origin": [-19.65, 0, 0], "axis": [0, 0, 1], "phase": 0 },
+      "densityKgM3": 1240,
+      "gear": { "teeth": 36, "pitchRadiusMm": 19.65, "rootRadiusMm": 17.57, "thicknessMm": 10.0 }
+    },
+    {
+      "id": "gearB",
+      "name": "Gear B",
+      "stl": "GearB2.stl",
+      "color": "#FFA500",
+      // В STL зуб стоит на 0°; поворот на 180·(z−1)/z = 175° ставит зуб A во впадину B.
+      "joint": { "type": "revolute", "origin": [19.65, 0, 0], "axis": [0, 0, 1], "phase": 175 },
+      "densityKgM3": 1240,
+      "gear": { "teeth": 36, "pitchRadiusMm": 19.65, "rootRadiusMm": 17.57, "thicknessMm": 10.0 }
+    }
+  ],
+
+  "couplings": [
+    { "type": "gear", "from": "gearA", "to": "gearB", "ratio": -1.0 }
+  ],
+
+  "fasteners": [
+    { "kind": "Стопорный винт ступицы", "size": "M3×4", "type": "set-screw", "attachedTo": "gearA", "count": 1, "note": "входит в модель мотора" },
+    { "kind": "Винт крепления мотора к кронштейну", "size": "M3×6", "type": "socket-screw", "count": 2, "note": "входит в модель мотора" }
+  ]
+}

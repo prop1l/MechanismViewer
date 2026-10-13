@@ -1,0 +1,70 @@
+{
+  "id": "four-bar-crank-rocker",
+  "name": "Кривошипно-коромысловый четырёхзвенник",
+  "category": "Рычажные механизмы",
+  "description": "Кривошип 15 мм на валу мотора через шатун 55 мм качает коромысло 35 мм на 51° (стойка 60 мм). Механизм Грасгофа: кривошип проворачивается полностью.",
+
+  "motion": { "input": "rotation", "output": "oscillation" },
+  "specs": { "angleDeg": 51.2, "maxTorqueNm": 0.02, "maxSpeedRadS": 20 },
+  "envelopeMm": [104, 67, 80],
+
+  "driver": { "type": "motor", "part": "crank", "motorGapMm": 6.0 },
+  "output": "rocker",
+
+  "parts": [
+    {
+      "id": "crank",
+      "name": "Кривошип",
+      "stl": "Crank.stl",
+      "color": "#4682B4",
+      "joint": { "type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1], "phase": 0 },
+      "inertiaKgM2": 1.6e-7
+    },
+    {
+      "id": "rocker",
+      "name": "Коромысло",
+      "stl": "Rocker.stl",
+      "color": "#FFA500",
+      // Угол коромысла при кривошипе на 0° — из замыкания контура (решатель проверяет совпадение).
+      "joint": { "type": "revolute", "origin": [60, 0, 0], "axis": [0, 0, 1], "phase": 94.0960438 },
+      "inertiaKgM2": 1.1e-6
+    },
+    {
+      "id": "coupler",
+      "name": "Шатун",
+      "stl": "Coupler.stl",
+      "color": "#B0B7C0",
+      "joint": {
+        "type": "link",
+        "axis": [0, 0, 1],
+        "link": { "from": "crank", "fromPoint": [15, 0, 0], "to": "rocker", "toPoint": [35, 0, 0] }
+      }
+    },
+    {
+      "id": "frame",
+      "name": "Стойка",
+      "stl": "Frame.stl",
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    { "type": "four-bar", "from": "crank", "to": "rocker", "crankMm": 15, "couplerMm": 55, "rockerMm": 35, "branch": 1 }
+  ],
+
+  "fasteners": [
+    { "kind": "Палец шарнира кривошип — шатун", "size": "Ø4×10", "type": "pin", "attachedTo": "crank", "note": "в модели — часть кривошипа" },
+    { "kind": "Палец шарнира шатун — коромысло", "size": "Ø4×10", "type": "pin", "attachedTo": "rocker", "note": "в модели — часть коромысла" },
+    { "kind": "Ось коромысла", "size": "Ø5×12", "type": "pin", "attachedTo": "rocker", "note": "только в спецификации" },
+    {
+      "kind": "Винт крепления стойки",
+      "size": "M3×8",
+      "type": "socket-screw",
+      "diameterMm": 3,
+      "lengthMm": 8,
+      "positions": [[40, -10, -2], [80, 40, -2]],
+      "axis": [0, 0, -1],
+      "attachedTo": "frame"
+    }
+  ]
+}

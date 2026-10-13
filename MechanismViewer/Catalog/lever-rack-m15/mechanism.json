@@ -1,0 +1,71 @@
+{
+  "id": "lever-rack-m15",
+  "name": "Рычаг с шестерней и рейкой",
+  "category": "Зубчатые передачи",
+  "description": "Ручной рычаг 58 мм на шестерне m1,5 z20 двигает рейку в направляющих. Поворот рычага на ±45° даёт ход рейки ±11,8 мм.",
+
+  "motion": { "input": "rotation", "output": "linear" },
+  "specs": { "strokeMm": 23.6, "angleDeg": 90, "maxForceN": 30 },
+  "envelopeMm": [104, 94, 20],
+
+  // Пользователь тянет рычаг; упоры ±45°, рука — не больше 0,5 Н·м (≈ 9 Н на рукоятке).
+  "driver": { "type": "lever", "part": "lever", "range": [-45, 45], "handForce": 0.5 },
+  "output": "rack",
+
+  "parts": [
+    {
+      "id": "lever",
+      "name": "Рычаг с шестерней",
+      "stl": "Lever.stl",
+      "color": "#4682B4",
+      // В STL впадина зубьев стоит снизу (−90°), куда входит зуб рейки.
+      "joint": { "type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1] },
+      "gear": { "teeth": 20, "pitchRadiusMm": 15, "rootRadiusMm": 13.125, "thicknessMm": 6 },
+      // Шестерня + плечо + рукоятка, PLA.
+      "inertiaKgM2": 8e-6
+    },
+    {
+      "id": "rack",
+      "name": "Рейка",
+      "stl": "Rack.stl",
+      "color": "#FFA500",
+      // Начало координат рейки — на делительной прямой под осью шестерни.
+      "joint": { "type": "prismatic", "origin": [0, -15, 0], "axis": [1, 0, 0] },
+      "massKg": 0.005
+    },
+    {
+      "id": "frame",
+      "name": "Основание с направляющими",
+      "stl": "Frame.stl",
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    { "type": "rack", "from": "lever", "to": "rack" }
+  ],
+
+  "fasteners": [
+    { "kind": "Ось рычага", "size": "Ø8×14", "type": "pin", "attachedTo": "lever", "note": "в модели — ступица рычага" },
+    {
+      "kind": "Стопорное кольцо оси",
+      "size": "8",
+      "type": "retaining-ring",
+      "diameterMm": 8,
+      // В канавке у переднего торца ступицы (z до 12).
+      "positions": [[0, 0, 10.8]],
+      "attachedTo": "lever"
+    },
+    {
+      "kind": "Винт крепления направляющих",
+      "size": "M3×10",
+      "type": "socket-screw",
+      "diameterMm": 3,
+      "lengthMm": 10,
+      // В верхнюю грань нижней направляющей (z = 8), под рейкой.
+      "positions": [[-44, -27.5, 8], [-20, -27.5, 8], [20, -27.5, 8], [44, -27.5, 8]],
+      "axis": [0, 0, -1],
+      "attachedTo": "frame"
+    }
+  ]
+}
