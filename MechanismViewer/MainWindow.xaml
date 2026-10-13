@@ -14,8 +14,8 @@
             <WrapPanel>
                 <!-- Пуск/пауза нужны только мотору: ручные приводы симулируются постоянно. -->
                 <StackPanel x:Name="RunPanel" Orientation="Horizontal">
-                    <Button Content="Запустить" Click="StartButton_Click" />
-                    <Button Content="Пауза" Click="PauseButton_Click" />
+                    <Button x:Name="StartButton" Content="Запустить" Click="StartButton_Click" />
+                    <Button x:Name="PauseButton" Content="Пауза" Click="PauseButton_Click" />
                 </StackPanel>
                 <Button Content="Сбросить" Click="ResetButton_Click" />
 
