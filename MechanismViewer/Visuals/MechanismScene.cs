@@ -1,6 +1,7 @@
 using HelixToolkit.Wpf;
 using MechanismViewer.Catalog;
 using System.IO;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
@@ -247,9 +248,28 @@ public sealed class MechanismScene
         return new ModelVisual3D { Content = model };
     }
 
-    /// <summary>Сетки детали из STL, общие для всех одинаковых деталей (<see cref="MeshCache"/>); материал у каждой детали свой, чтобы подсвечивать её отдельно.</summary>
-    private static IReadOnlyList<MeshGeometry3D> PartMeshes(MechanismDefinition mechanism, PartSpec part) =>
-        MeshCache.Load(Path.Combine(mechanism.Directory, part.Stl));
+    /// <summary>
+    /// Сетки детали — из shape или STL, общие для всех одинаковых деталей (<see cref="MeshCache"/>).
+    /// Материал у каждой детали свой, чтобы подсвечивать её отдельно.
+    /// </summary>
+    private static IReadOnlyList<MeshGeometry3D> PartMeshes(MechanismDefinition mechanism, PartSpec part)
+    {
+        if (part.Shape is not { } shape)
+        {
+            return MeshCache.Load(Path.Combine(mechanism.Directory, part.Stl!));
+        }
+
+        // Контур кулачка зависит от закона связи и положения толкателя — они входят в ключ.
+        bool derived = shape.Any(s => s.Cam is not null);
+        string description = "shape:" + JsonSerializer.Serialize(new
+        {
+            shape,
+            part.ShapeAxis,
+            Couplings = derived ? mechanism.Couplings : null,
+            Joints = derived ? mechanism.Parts.Select(p => p.Joint) : null
+        });
+        return MeshCache.GetOrAdd(description, () => [ShapeBuilder.Build(mechanism, part)]);
+    }
 
     private static Model3DGroup Build(IReadOnlyList<MeshGeometry3D> meshes, Material material)
     {

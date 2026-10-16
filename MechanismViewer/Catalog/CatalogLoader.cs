@@ -62,6 +62,24 @@ public static class CatalogLoader
                 throw new InvalidDataException($"{path}: деталь «{part.Id}» описана дважды");
             }
 
+            if ((part.Stl is null) == (part.Shape is null))
+            {
+                throw new InvalidDataException($"{path}: у детали «{part.Id}» задайте либо stl, либо shape");
+            }
+
+            if (part.Shape is { } shape)
+            {
+                if (shape.Count == 0 || shape.Any(s => s.KindCount != 1))
+                {
+                    throw new InvalidDataException($"{path}: у детали «{part.Id}» в каждом элементе shape должен быть ровно один примитив");
+                }
+
+                if (part.ShapeAxis is not ("z" or "x"))
+                {
+                    throw new InvalidDataException($"{path}: у детали «{part.Id}» shapeAxis — z или x");
+                }
+            }
+
             if (part.Joint.Origin.Length != 3 || part.Joint.Axis.Length != 3)
             {
                 throw new InvalidDataException($"{path}: у детали «{part.Id}» origin/axis должны быть из 3 чисел");

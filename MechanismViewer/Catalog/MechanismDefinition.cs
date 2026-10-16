@@ -106,7 +106,17 @@ public sealed record PartSpec
 {
     public required string Id { get; init; }
     public string Name { get; init; } = "";
-    public required string Stl { get; init; }
+    /// <summary>STL детали (путь от папки механизма) — для моделей из CAD. Задаётся либо stl, либо shape.</summary>
+    public string? Stl { get; init; }
+
+    /// <summary>Форма из примитивов в системе детали, мм: строится при загрузке, файл не нужен.</summary>
+    public IReadOnlyList<ShapeSpec>? Shape { get; init; }
+
+    /// <summary>
+    /// Ось, вдоль которой выдавливается shape: z (по умолчанию) или x — тогда форма строится в плоскости XY
+    /// и переносится (x, y, z) → (z, y, x), как колесо червячной пары с осью X.
+    /// </summary>
+    public string ShapeAxis { get; init; } = "z";
 
     /// <summary>Цвет в формате #RRGGBB.</summary>
     public string Color { get; init; } = "#A0A0A0";
@@ -266,4 +276,108 @@ public sealed record FastenerSpec
     public string? Note { get; init; }
 
     public int Quantity => Positions is { Length: > 0 } p ? p.Length : Count;
+}
+
+/// <summary>
+/// Примитив формы детали; задаётся ровно одно поле. Тела выдавливаются вдоль Z (z — [от, до]), мм.
+/// Пересекающиеся примитивы образуют одно тело, как при объединении.
+/// </summary>
+public sealed record ShapeSpec
+{
+    /// <summary>Параллелепипед [x0, y0, z0, x1, y1, z1].</summary>
+    public double[]? Box { get; init; }
+
+    public CylinderShape? Cylinder { get; init; }
+    public PolygonShape? Polygon { get; init; }
+    public GearShape? Gear { get; init; }
+    public RackShape? Rack { get; init; }
+    public RingXShape? RingX { get; init; }
+    public ThreadShape? Thread { get; init; }
+    public CamShape? Cam { get; init; }
+    public GenevaShape? GenevaStar { get; init; }
+    public GenevaShape? GenevaDisk { get; init; }
+
+    [JsonIgnore]
+    public int KindCount =>
+        new object?[] { Box, Cylinder, Polygon, Gear, Rack, RingX, Thread, Cam, GenevaStar, GenevaDisk }.Count(k => k is not null);
+}
+
+/// <summary>Цилиндр с осью Z: центр at, радиус r, сегментов по окружности.</summary>
+public sealed record CylinderShape
+{
+    public double[] At { get; init; } = [0, 0];
+    public required double R { get; init; }
+    public required double[] Z { get; init; }
+    public int Segments { get; init; } = 48;
+}
+
+/// <summary>Простой многоугольник [[x, y], …] (против часовой), выдавленный по Z.</summary>
+public sealed record PolygonShape
+{
+    public required double[][] Points { get; init; }
+    public required double[] Z { get; init; }
+}
+
+/// <summary>Прямозубое колесо: зуб — трапеция с углом профиля 20° и боковым зазором; первый зуб на phaseDeg.</summary>
+public sealed record GearShape
+{
+    public double[] At { get; init; } = [0, 0];
+    public required double Module { get; init; }
+    public required int Teeth { get; init; }
+    public double PhaseDeg { get; init; }
+    public required double[] Z { get; init; }
+}
+
+/// <summary>
+/// Зубья рейки: делительная прямая через origin вдоль direction, зубья смотрят влево от направления;
+/// зуб k стоит на k·π·m, teeth — [первый k, последний k].
+/// </summary>
+public sealed record RackShape
+{
+    public required double[] Origin { get; init; }
+    public double[] Direction { get; init; } = [1, 0];
+    public required double Module { get; init; }
+    public required int[] Teeth { get; init; }
+    public required double[] Z { get; init; }
+}
+
+/// <summary>Кольцо (виток пружины) вокруг оси X: x — [от, до], r — [внутренний, наружный].</summary>
+public sealed record RingXShape
+{
+    public required double[] X { get; init; }
+    public required double[] R { get; init; }
+    public int Segments { get; init; } = 32;
+}
+
+/// <summary>Правая резьба вокруг Z: трапеция r — [впадина, вершина], width — [у впадины, у вершины], шаг pitch.</summary>
+public sealed record ThreadShape
+{
+    public required double[] R { get; init; }
+    public required double Pitch { get; init; }
+    public required double[] Z { get; init; }
+    public required double[] Width { get; init; }
+    public int PerTurn { get; init; } = 32;
+}
+
+/// <summary>
+/// Контур дискового кулачка под плоский толкатель: огибающая положений тарелки по закону связи cam этой детали.
+/// Базовый радиус и направление — от оси кулачка до начала координат толкателя.
+/// </summary>
+public sealed record CamShape
+{
+    public required double[] Z { get; init; }
+    public int Samples { get; init; } = 720;
+}
+
+/// <summary>
+/// Мальтийский крест (genevaStar) или запирающий диск ведущего звена с выемкой у пальца (genevaDisk).
+/// Пазы креста — на π/n + 2πk/n, палец ведущего диска — на его локальной +X.
+/// </summary>
+public sealed record GenevaShape
+{
+    public required int Slots { get; init; }
+    public required double CenterDistance { get; init; }
+    public required double SlotWidth { get; init; }
+    public required double PinRadius { get; init; }
+    public required double[] Z { get; init; }
 }

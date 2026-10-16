@@ -1,14 +1,15 @@
 using HelixToolkit.Wpf;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 using System.Windows.Media.Media3D;
 
 namespace MechanismViewer.Visuals;
 
 /// <summary>
-/// Кэш сеток деталей из STL. Файл разбирается один раз, сетка замораживается и делится между всеми деталями
+/// Кэш сеток деталей (STL и построенных по shape). Файл разбирается или форма строится один раз, сетка замораживается и делится между всеми деталями
 /// с тем же содержимым: обе шестерни пары, повторное открытие механизма, одинаковые детали разных механизмов.
-/// Ключ — хеш содержимого файла, а не путь, поэтому одинаковые файлы в разных папках дают одну сетку.
+/// Ключ — хеш содержимого файла или описания формы, а не путь, поэтому одинаковые детали разных механизмов дают одну сетку.
 /// Ссылки слабые: сетка живёт, пока её показывает хоть одна сцена, и не держит память после закрытия.
 /// Замороженная сетка доступна из любого потока и не тратит память на уведомления об изменениях.
 /// </summary>
@@ -33,6 +34,10 @@ public static class MeshCache
                 .ToArray();
         });
     }
+
+    /// <summary>Сетки, построенные по описанию: <paramref name="description"/> однозначно задаёт результат <paramref name="build"/>.</summary>
+    public static IReadOnlyList<MeshGeometry3D> GetOrAdd(string description, Func<MeshGeometry3D[]> build) =>
+        GetOrAdd(Encoding.UTF8.GetBytes(description), build);
 
     private static IReadOnlyList<MeshGeometry3D> GetOrAdd(byte[] content, Func<MeshGeometry3D[]> build)
     {

@@ -142,13 +142,12 @@ public class NewMechanismTests
     }
 
     [Fact]
-    public void CamStl_TouchesFollowerAtEveryAngle()
+    public void CamShape_TouchesFollowerAtEveryAngle()
     {
         RunSta(() =>
         {
-            Model3DGroup model = new StLReader().Read(Path.Combine(CatalogLoader.DefaultRoot, "cam-flat-follower", "Cam.stl"))!;
-            Point3D[] points = model.Children.OfType<GeometryModel3D>()
-                .SelectMany(g => ((MeshGeometry3D)g.Geometry).Positions)
+            MechanismDefinition m = Load("cam-flat-follower");
+            Point3D[] points = ShapeBuilder.Build(m, m.Part("cam")).Positions
                 .Where(p => p.Z > 0.5 && p.Z < 7.5 || Math.Abs(p.Z - 8) < 1e-3) // контур кулачка, без ступицы
                 .ToArray();
             CamCoupling cam = Cam();

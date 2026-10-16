@@ -15,7 +15,12 @@
     {
       "id": "driver",
       "name": "Ведущий диск с пальцем",
-      "stl": "Driver.stl",
+      "shape": [
+        { "cylinder": { "r": 6, "z": [0, 6] } },
+        { "box": [0, -4, 0, 28.284271, 4, 5] },
+        { "genevaDisk": { "slots": 4, "centerDistance": 40, "slotWidth": 6.4, "pinRadius": 3, "z": [6, 11] } },
+        { "cylinder": { "at": [28.284271, 0], "r": 3, "z": [0, 12], "segments": 24 } }
+      ],
       "color": "#4682B4",
       // Палец (локальная +X) смотрит от креста: старт в фазе выстоя.
       "joint": { "type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1], "phase": 180 },
@@ -24,7 +29,10 @@
     {
       "id": "star",
       "name": "Крест",
-      "stl": "Star.stl",
+      "shape": [
+        { "genevaStar": { "slots": 4, "centerDistance": 40, "slotWidth": 6.4, "pinRadius": 3, "z": [6, 11] } },
+        { "cylinder": { "r": 4, "z": [4, 13] } }
+      ],
       "color": "#FFA500",
       // Межосевое 40 мм; пазы на 45° + 90°·k, запирающая дуга обращена к ведущему диску.
       "joint": { "type": "revolute", "origin": [40, 0, 0], "axis": [0, 0, 1], "phase": 0 },
@@ -34,7 +42,10 @@
     {
       "id": "frame",
       "name": "Основание",
-      "stl": "Frame.stl",
+      "shape": [
+        { "box": [20, -32, -4, 75, 32, -2] },  // за кронштейном мотора (|x| ≤ 18)
+        { "cylinder": { "at": [40, 0], "r": 6, "z": [-2, 4] } }
+      ],
       "color": "#5A606A"
     }
   ],
