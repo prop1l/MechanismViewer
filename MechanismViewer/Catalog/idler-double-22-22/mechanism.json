@@ -1,0 +1,87 @@
+{
+  "id": "idler-double-22-22",
+  "name": "Передача с двумя паразитными шестернями",
+  "category": "Зубчатые передачи",
+  "description": "Цепочка z22 → z14 → z14 → z22: передаточное 1:1, но выходное колесо вращается против мотора — каждая паразитная шестерня меняет направление.",
+
+  "motion": {"input": "rotation", "output": "rotation"},
+  "specs": {"ratio": 1, "maxTorqueNm": 0.05, "maxSpeedRadS": 40},
+  "envelopeMm": [88, 34, 80],
+
+  "driver": {"type": "motor", "part": "drive", "motorGapMm": 6.0, "hubSeatMm": 6.0},
+  "output": "output",
+
+  "parts": [
+    {
+      "id": "drive",
+      "name": "Ведущая шестерня z22",
+      "shape": [
+        {"gear": {"module": 1, "teeth": 22, "z": [0, 6]}}
+      ],
+      "color": "#4682B4",
+      "joint": {"type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1]},
+      "gear": {"teeth": 22, "pitchRadiusMm": 11, "rootRadiusMm": 9.75, "thicknessMm": 6}
+    },
+    {
+      "id": "idler1",
+      "name": "Паразитная шестерня z14",
+      "shape": [
+        {"gear": {"module": 1, "teeth": 14, "phaseDeg": 192.8571, "z": [0, 6]}},
+        {"cylinder": {"r": 4, "z": [-1, 7]}}
+      ],
+      "color": "#6B8E23",
+      "joint": {"type": "revolute", "origin": [18, 0, 0], "axis": [0, 0, 1]},
+      "gear": {"teeth": 14, "pitchRadiusMm": 7, "rootRadiusMm": 5.75, "thicknessMm": 6}
+    },
+    {
+      "id": "idler2",
+      "name": "Паразитная шестерня z14",
+      "shape": [
+        {"gear": {"module": 1, "teeth": 14, "phaseDeg": 180, "z": [0, 6]}},
+        {"cylinder": {"r": 4, "z": [-1, 7]}}
+      ],
+      "color": "#6B8E23",
+      "joint": {"type": "revolute", "origin": [32, 0, 0], "axis": [0, 0, 1]},
+      "gear": {"teeth": 14, "pitchRadiusMm": 7, "rootRadiusMm": 5.75, "thicknessMm": 6}
+    },
+    {
+      "id": "output",
+      "name": "Колесо z22 со стрелкой",
+      "shape": [
+        {"gear": {"module": 1, "teeth": 22, "phaseDeg": 188.1818, "z": [0, 6]}},
+        {"cylinder": {"r": 5, "z": [-1, 8]}},
+        {"polygon": {"points": [[0, -2], [9, -0.6], [9, 0.6], [0, 2]], "z": [6, 7.5]}}
+      ],
+      "color": "#FFA500",
+      "joint": {"type": "revolute", "origin": [50, 0, 0], "axis": [0, 0, 1]},
+      "gear": {"teeth": 22, "pitchRadiusMm": 11, "rootRadiusMm": 9.75, "thicknessMm": 6}
+    },
+    {
+      "id": "frame",
+      "name": "Плита с осями",
+      "shape": [
+        {"box": [15.5, -17, -3.2, 70, 17, -1.2]},
+        {"cylinder": {"at": [18, 0], "r": 2, "z": [-1.2, 8]}},
+        {"cylinder": {"at": [32, 0], "r": 2, "z": [-1.2, 8]}},
+        {"cylinder": {"at": [50, 0], "r": 2, "z": [-1.2, 9]}}
+      ],
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    {"type": "gear", "from": "drive", "to": "idler1"},
+    {"type": "gear", "from": "idler1", "to": "idler2"},
+    {"type": "gear", "from": "idler2", "to": "output"}
+  ],
+
+  "designedContacts": [["idler1", "frame"], ["idler2", "frame"], ["output", "frame"]],
+
+  "fasteners": [
+    {"kind": "Стопорный винт ступицы", "size": "M3×4", "type": "set-screw", "attachedTo": "drive", "note": "входит в модель мотора"},
+    {"kind": "Ось паразитной шестерни 1", "size": "Ø4×9", "type": "pin", "attachedTo": "frame", "note": "в модели — часть плиты"},
+    {"kind": "Ось паразитной шестерни 2", "size": "Ø4×9", "type": "pin", "attachedTo": "frame", "note": "в модели — часть плиты"},
+    {"kind": "Ось колеса", "size": "Ø4×10", "type": "pin", "attachedTo": "frame", "note": "в модели — часть плиты"},
+    {"kind": "Винт крепления плиты", "size": "M3×6", "type": "socket-screw", "diameterMm": 3, "lengthMm": 6, "positions": [[66, 13, -1.2], [66, -13, -1.2]], "axis": [0, 0, -1], "attachedTo": "frame"}
+  ]
+}

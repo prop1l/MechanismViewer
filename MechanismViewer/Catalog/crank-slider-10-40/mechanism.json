@@ -1,0 +1,73 @@
+{
+  "id": "crank-slider-10-40",
+  "name": "Кривошипно-ползунный механизм 10/40",
+  "category": "Рычажные механизмы",
+  "description": "Кривошип 10 мм на валу мотора, шатун 40 мм, ползун в направляющих: ход 20 мм. Рельсы подняты над шатуном и держатся на задней стойке.",
+
+  "motion": {"input": "rotation", "output": "linear"},
+  "specs": {"strokeMm": 20, "maxForceN": 0.6, "maxSpeedRadS": 20},
+  "envelopeMm": [86, 36, 60],
+
+  "driver": {"type": "motor", "part": "crank", "motorGapMm": 6.0, "shaftEndMm": 4.5},
+  "output": "slider",
+
+  "parts": [
+    {
+      "id": "crank",
+      "name": "Кривошип",
+      "shape": [
+        {"cylinder": {"r": 6, "z": [0, 5]}},
+        {"box": [0, -4, 0, 10, 4, 5]},
+        {"cylinder": {"at": [10, 0], "r": 4, "z": [0, 5]}},
+        {"cylinder": {"at": [10, 0], "r": 2, "z": [5, 10], "segments": 24}}
+      ],
+      "color": "#4682B4",
+      "joint": {"type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1]},
+      "inertiaKgM2": 1.25e-07
+    },
+    {
+      "id": "slider",
+      "name": "Ползун",
+      "shape": [
+        {"cylinder": {"r": 2, "z": [5, 10], "segments": 24}},
+        {"box": [-9, -7, 10, 9, 7, 18]}
+      ],
+      "color": "#FFA500",
+      "joint": {"type": "prismatic", "origin": [50, 0, 0], "axis": [1, 0, 0]},
+      "massKg": 0.0031
+    },
+    {
+      "id": "rod",
+      "name": "Шатун",
+      "shape": [
+        {"box": [0, -2.5, 5.5, 40, 2.5, 9]},
+        {"cylinder": {"r": 4, "z": [5.5, 9]}},
+        {"cylinder": {"at": [40, 0], "r": 4, "z": [5.5, 9]}}
+      ],
+      "color": "#B0B7C0",
+      "joint": {"type": "link", "axis": [0, 0, 1], "link": {"from": "crank", "fromPoint": [10, 0, 0], "to": "slider", "toPoint": [0, 0, 0]}}
+    },
+    {
+      "id": "guide",
+      "name": "Направляющие на задней стойке",
+      "shape": [
+        {"box": [16, -13, 0, 66, 13, 2]},
+        {"box": [20, 7.5, 9.5, 60, 10.5, 18]},
+        {"box": [20, -10.5, 9.5, 60, -7.5, 18]},
+        {"box": [60, -10.5, 2, 66, 10.5, 18]}
+      ],
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    {"type": "crank-slider", "from": "crank", "to": "slider", "crankMm": 10, "rodMm": 40, "offsetMm": 0}
+  ],
+
+  "fasteners": [
+    {"kind": "Палец кривошипа", "size": "Ø4×10", "type": "pin", "attachedTo": "crank", "note": "в модели — часть кривошипа"},
+    {"kind": "Палец ползуна", "size": "Ø4×10", "type": "pin", "attachedTo": "slider", "note": "в модели — часть ползуна"},
+    {"kind": "Стопорный винт ступицы", "size": "M3×4", "type": "set-screw", "attachedTo": "crank", "note": "входит в модель мотора"},
+    {"kind": "Винт крепления основания", "size": "M3×8", "type": "socket-screw", "diameterMm": 3, "lengthMm": 8, "positions": [[20, 9.5, 2], [20, -9.5, 2]], "axis": [0, 0, -1], "attachedTo": "guide"}
+  ]
+}

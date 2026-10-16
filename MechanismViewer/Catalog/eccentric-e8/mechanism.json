@@ -1,0 +1,58 @@
+{
+  "id": "eccentric-e8",
+  "name": "Эксцентрик со смещением 8 мм",
+  "category": "Кулачковые механизмы",
+  "description": "Круглый диск Ø52 со смещением 8 мм: гармонический ход толкателя 16 мм за оборот вала.",
+
+  "motion": {"input": "rotation", "output": "linear"},
+  "specs": {"strokeMm": 16, "maxForceN": 2, "maxSpeedRadS": 20},
+  "envelopeMm": [47, 132, 80],
+
+  "driver": {"type": "motor", "part": "cam", "motorGapMm": 6.0},
+  "output": "follower",
+
+  "parts": [
+    {
+      "id": "cam",
+      "name": "Кулачок",
+      "shape": [
+        {"cam": {"z": [0, 8]}},
+        {"cylinder": {"r": 6, "z": [-2, 10]}}
+      ],
+      "color": "#4682B4",
+      "joint": {"type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1]},
+      "inertiaKgM2": 2.082e-05
+    },
+    {
+      "id": "follower",
+      "name": "Толкатель",
+      "shape": [
+        {"box": [-14, 0, 0, 14, 3, 8]},
+        {"box": [-3, 3, 2, 3, 46, 6]},
+        {"box": [-6, 46, 1, 6, 50, 7]}
+      ],
+      "color": "#FFA500",
+      "joint": {"type": "prismatic", "origin": [0, 18, 0], "axis": [0, 1, 0]},
+      "massKg": 0.004
+    },
+    {
+      "id": "frame",
+      "name": "Стойка с направляющей",
+      "shape": [
+        {"box": [-23.5, 22, -4, 23.5, 68, -2]},
+        {"box": [-9, 40, -2, -3.2, 60, 8]},
+        {"box": [3.2, 40, -2, 9, 60, 8]}
+      ],
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    {"type": "cam", "from": "cam", "to": "follower", "segments": [{"angleDeg": 180, "riseMm": 16, "law": "harmonic"}, {"angleDeg": 180, "riseMm": -16, "law": "harmonic"}]}
+  ],
+
+  "fasteners": [
+    {"kind": "Пружина прижима толкателя", "size": "Ø8×25", "type": "spring", "attachedTo": "follower", "note": "в модели не показана: контакт обеспечивает кинематика"},
+    {"kind": "Винт крепления стойки", "size": "M3×8", "type": "socket-screw", "diameterMm": 3, "lengthMm": 8, "positions": [[-18.5, 36, -2], [18.5, 36, -2]], "axis": [0, 0, -1], "attachedTo": "frame"}
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "id": "lever-rack-m2-z16",
+  "name": "Рычаг 70 мм с шестерней m2 z16 и рейкой",
+  "category": "Зубчатые передачи",
+  "description": "Ручной рычаг 70 мм на шестерне m2 z16 (r = 16 мм) двигает рейку в направляющих. Поворот на ±30° даёт ход рейки ±8,4 мм.",
+
+  "motion": {"input": "rotation", "output": "linear"},
+  "specs": {"strokeMm": 16.8, "angleDeg": 60, "maxForceN": 30},
+  "envelopeMm": [113, 116, 20],
+
+  "driver": {"type": "lever", "part": "lever", "range": [-30, 30], "handForce": 0.8},
+  "output": "rack",
+
+  "parts": [
+    {
+      "id": "lever",
+      "name": "Рычаг с шестерней z16",
+      "shape": [
+        {"gear": {"module": 2, "teeth": 16, "phaseDeg": 281.25, "z": [0, 6]}},
+        {"cylinder": {"r": 4, "z": [-2, 12]}},
+        {"box": [-4, 0, 6, 4, 70, 10]},
+        {"cylinder": {"at": [0, 73], "r": 6, "z": [6, 16]}}
+      ],
+      "color": "#4682B4",
+      "joint": {"type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1]},
+      "gear": {"teeth": 16, "pitchRadiusMm": 16, "rootRadiusMm": 13.5, "thicknessMm": 6},
+      "inertiaKgM2": 2.16e-05
+    },
+    {
+      "id": "rack",
+      "name": "Рейка",
+      "shape": [
+        {"box": [-43.9823, -10, 0, 43.9823, -2.5, 6]},
+        {"rack": {"origin": [0, 0], "module": 2, "teeth": [-6, 6], "z": [0, 6]}}
+      ],
+      "color": "#FFA500",
+      "joint": {"type": "prismatic", "origin": [0, -16, 0], "axis": [1, 0, 0]},
+      "massKg": 0.0039
+    },
+    {
+      "id": "frame",
+      "name": "Основание с направляющими",
+      "shape": [
+        {"box": [-56.3599, -31, -4, 56.3599, -5, -2]},
+        {"box": [-56.3599, -31, -2, 56.3599, -26, 8]},
+        {"box": [-56.3599, -26, 6, 56.3599, -22, 8]},
+        {"box": [-56.3599, -26, -2, 56.3599, -22, 0]}
+      ],
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    {"type": "rack", "from": "lever", "to": "rack"}
+  ],
+
+  "fasteners": [
+    {"kind": "Ось рычага", "size": "Ø8×14", "type": "pin", "attachedTo": "lever", "note": "в модели — ступица рычага"},
+    {"kind": "Винт крепления направляющих", "size": "M3×10", "type": "socket-screw", "diameterMm": 3, "lengthMm": 10, "positions": [[-52.3599, -28.5, 8], [52.3599, -28.5, 8]], "axis": [0, 0, -1], "attachedTo": "frame"}
+  ]
+}

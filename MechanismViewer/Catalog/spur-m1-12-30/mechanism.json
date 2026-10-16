@@ -1,0 +1,59 @@
+{
+  "id": "spur-m1-12-30",
+  "name": "Цилиндрическая пара 12/30, m1",
+  "category": "Зубчатые передачи",
+  "description": "Шестерня z12 на валу мотора вращает колесо z30 со стрелкой: понижающая передача 1:2,5, межосевое 21 мм. Колесо вращается в обратную сторону.",
+
+  "motion": {"input": "rotation", "output": "rotation"},
+  "specs": {"ratio": 0.4, "maxTorqueNm": 0.01, "maxSpeedRadS": 40},
+  "envelopeMm": [63, 42, 80],
+
+  "driver": {"type": "motor", "part": "drive", "motorGapMm": 6.0, "hubSeatMm": 6.0},
+  "output": "driven",
+
+  "parts": [
+    {
+      "id": "drive",
+      "name": "Шестерня z12",
+      "shape": [
+        {"gear": {"module": 1, "teeth": 12, "z": [0, 6]}}
+      ],
+      "color": "#4682B4",
+      "joint": {"type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1]},
+      "gear": {"teeth": 12, "pitchRadiusMm": 6, "rootRadiusMm": 4.75, "thicknessMm": 6}
+    },
+    {
+      "id": "driven",
+      "name": "Колесо z30 со стрелкой",
+      "shape": [
+        {"gear": {"module": 1, "teeth": 30, "phaseDeg": 186, "z": [0, 6]}},
+        {"cylinder": {"r": 5, "z": [-1, 8]}},
+        {"polygon": {"points": [[0, -2], [13, -0.6], [13, 0.6], [0, 2]], "z": [6, 7.5]}}
+      ],
+      "color": "#FFA500",
+      "joint": {"type": "revolute", "origin": [21, 0, 0], "axis": [0, 0, 1]},
+      "gear": {"teeth": 30, "pitchRadiusMm": 15, "rootRadiusMm": 13.75, "thicknessMm": 6}
+    },
+    {
+      "id": "frame",
+      "name": "Плита с осью",
+      "shape": [
+        {"box": [15.5, -21, -3.2, 45, 21, -1.2]},
+        {"cylinder": {"at": [21, 0], "r": 2, "z": [-1.2, 8]}}
+      ],
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    {"type": "gear", "from": "drive", "to": "driven"}
+  ],
+
+  "designedContacts": [["driven", "frame"]],
+
+  "fasteners": [
+    {"kind": "Стопорный винт ступицы", "size": "M3×4", "type": "set-screw", "attachedTo": "drive", "note": "входит в модель мотора"},
+    {"kind": "Ось колеса", "size": "Ø4×10", "type": "pin", "attachedTo": "frame", "note": "в модели — часть плиты"},
+    {"kind": "Винт крепления плиты", "size": "M3×6", "type": "socket-screw", "diameterMm": 3, "lengthMm": 6, "positions": [[41, 17, -1.2], [41, -17, -1.2]], "axis": [0, 0, -1], "attachedTo": "frame"}
+  ]
+}

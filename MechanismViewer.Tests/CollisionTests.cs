@@ -20,26 +20,6 @@ public class CollisionTests(ITestOutputHelper output)
     /// <summary>Пересечение мельче этого — погрешность сетки у касающихся поверхностей, мм³.</summary>
     private const double Noise = 1.0;
 
-    /// <summary>
-    /// Конструктивные пересечения, кроме общих (палец шатуна в его проушинах, вал мотора в ведущей детали):
-    /// одна деталь входит в другую по замыслу, отверстие в модели не вырезано.
-    /// </summary>
-    private static readonly Dictionary<string, (string, string)[]> Designed = new()
-    {
-        // Винт в резьбе гайки, направляющая во втулке гайки, конец винта в торцевой опоре.
-        ["screw-nut-tr8"] = [("screw", "nut"), ("nut", "frame"), ("screw", "frame")],
-        // Ось колеса в стойках, конец червяка в передней опоре.
-        ["worm-1-20"] = [("wheel", "frame"), ("worm", "frame")],
-        // Оси блок-шестерни, колеса и указателя — часть основания.
-        ["gearbox-slider-indicator"] = [("cluster", "frame"), ("crankGear", "frame"), ("indicator", "frame")],
-        // Ось шестерни с рукояткой — часть стенки.
-        ["rack-jack-crank"] = [("crank", "frame")],
-        // Винт в подпятнике и траверсе, направляющие во втулках столика, винт в гайке столика.
-        ["screw-table-handwheel"] = [("screw", "frame"), ("table", "frame"), ("screw", "table")],
-        // Оси паразитной шестерни и колеса — часть плиты.
-        ["idler-gear-train"] = [("idler", "frame"), ("output", "frame")],
-    };
-
     private static void RunSta(Action action)
     {
         Exception? error = null;
@@ -101,7 +81,8 @@ public class CollisionTests(ITestOutputHelper output)
                 b.Build();
             }
 
-            var designed = new HashSet<(string, string)>(Designed.GetValueOrDefault(id, []));
+            // Конструктивные пересечения: из описания механизма (ось в ступице и т. п.) и пальцы шатунов в их проушинах.
+            var designed = new HashSet<(string, string)>(m.DesignedContacts.Where(p => p.Length == 2).Select(p => (p[0], p[1])));
             foreach (PartSpec part in m.Parts.Where(p => p.Joint is { Type: "link", Link: not null }))
             {
                 designed.Add((part.Joint.Link!.From, part.Id));

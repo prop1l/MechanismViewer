@@ -130,6 +130,9 @@
     { "type": "rack", "from": "slider", "to": "indicator" }
   ],
 
+  // Оси блок-шестерни, колеса и указателя — часть основания.
+  "designedContacts": [["cluster", "frame"], ["crankGear", "frame"], ["indicator", "frame"]],
+
   "fasteners": [
     { "kind": "Стопорный винт ступицы", "size": "M3×4", "type": "set-screw", "attachedTo": "pinion", "note": "входит в модель мотора" },
     { "kind": "Ось блок-шестерни", "size": "Ø4×17", "type": "pin", "attachedTo": "frame", "note": "в модели — часть основания" },

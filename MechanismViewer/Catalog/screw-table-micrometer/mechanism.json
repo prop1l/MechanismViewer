@@ -1,0 +1,71 @@
+{
+  "id": "screw-table-micrometer",
+  "name": "Микрометрический подъёмный столик",
+  "category": "Винтовые передачи",
+  "description": "Маховик вращает винт с шагом 1 мм: 20 оборотов поднимают столик всего на 20 мм — для тонкой настройки высоты.",
+
+  "motion": {"input": "rotation", "output": "linear"},
+  "specs": {"strokeMm": 20, "maxForceN": 60},
+  "envelopeMm": [100, 112, 80],
+
+  "driver": {"type": "crank", "part": "screw", "range": [-7200, 0], "handForce": 0.4},
+  "output": "table",
+
+  "parts": [
+    {
+      "id": "screw",
+      "name": "Винт с шагом 1 мм и маховиком",
+      "shape": [
+        {"cylinder": {"r": 3.5, "z": [0, 86]}},
+        {"thread": {"r": [3.5, 4.25], "pitch": 1, "z": [8, 78], "width": [0.6, 0.3]}},
+        {"cylinder": {"r": 7, "z": [84, 92]}},
+        {"cylinder": {"r": 30, "z": [86, 90], "segments": 64}},
+        {"cylinder": {"at": [24, 0], "r": 4, "z": [90, 104], "segments": 24}}
+      ],
+      "shapeAxis": "y",
+      "color": "#B8BEC6",
+      "joint": {"type": "revolute", "origin": [0, 0, 0], "axis": [0, 1, 0]},
+      "inertiaKgM2": 8e-06,
+      "coulombFriction": 0.0005
+    },
+    {
+      "id": "table",
+      "name": "Столик с гайкой",
+      "shape": [
+        {"box": [-9, -9, -6, 9, 9, 6]},
+        {"box": [-42, -32, 6, 42, 32, 10]},
+        {"cylinder": {"at": [30, 0], "r": 6, "z": [-6, 10]}},
+        {"cylinder": {"at": [-30, 0], "r": 6, "z": [-6, 10]}}
+      ],
+      "shapeAxis": "y",
+      "color": "#FFA500",
+      "joint": {"type": "prismatic", "origin": [0, 20, 0], "axis": [0, 1, 0]},
+      "massKg": 0.03
+    },
+    {
+      "id": "frame",
+      "name": "Основание с направляющими",
+      "shape": [
+        {"box": [-50, -40, -8, 50, 40, 0]},
+        {"cylinder": {"r": 7, "z": [0, 5]}},
+        {"cylinder": {"at": [30, 0], "r": 3, "z": [0, 80]}},
+        {"cylinder": {"at": [-30, 0], "r": 3, "z": [0, 80]}},
+        {"box": [-36, -6, 76, 36, 6, 81]}
+      ],
+      "shapeAxis": "y",
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    {"type": "screw", "from": "screw", "to": "table", "leadMm": -1}
+  ],
+
+  "designedContacts": [["screw", "frame"], ["table", "frame"], ["screw", "table"]],
+
+  "fasteners": [
+    {"kind": "Упорный подшипник винта", "size": "51100", "attachedTo": "frame", "note": "в модели — подпятник основания"},
+    {"kind": "Втулка скольжения направляющей", "size": "Ø6/Ø12×16", "attachedTo": "table", "count": 2, "note": "в модели — часть столика"},
+    {"kind": "Винт крепления основания", "size": "M4×10", "type": "socket-screw", "diameterMm": 4, "lengthMm": 10, "positions": [[45, 0, 35], [-45, 0, 35], [45, 0, -35], [-45, 0, -35]], "axis": [0, -1, 0], "attachedTo": "frame"}
+  ]
+}

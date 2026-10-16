@@ -67,6 +67,9 @@
     { "type": "rack", "from": "crank", "to": "rack" }
   ],
 
+  // Ось шестерни с рукояткой — часть стенки.
+  "designedContacts": [["crank", "frame"]],
+
   "fasteners": [
     { "kind": "Ось шестерни", "size": "Ø5×14", "type": "pin", "attachedTo": "frame", "note": "в модели — часть основания" },
     {

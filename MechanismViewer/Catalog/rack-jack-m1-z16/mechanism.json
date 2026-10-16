@@ -1,0 +1,68 @@
+{
+  "id": "rack-jack-m1-z16",
+  "name": "Реечный домкрат m1 z16, рукоятка 35 мм",
+  "category": "Зубчатые передачи",
+  "description": "Рукоятка 35 мм на шестерне m1 z16 поднимает рейку с площадкой на 46 мм за 330° поворота.",
+
+  "motion": {"input": "rotation", "output": "linear"},
+  "specs": {"strokeMm": 46.1, "angleDeg": 330, "maxForceN": 50},
+  "envelopeMm": [82, 140, 34],
+
+  "driver": {"type": "crank", "part": "crank", "range": [0, 330], "handForce": 1.0},
+  "output": "rack",
+
+  "parts": [
+    {
+      "id": "crank",
+      "name": "Шестерня с рукояткой",
+      "shape": [
+        {"gear": {"module": 1, "teeth": 16, "phaseDeg": 11.25, "z": [0, 8]}},
+        {"cylinder": {"r": 5, "z": [-1, 8]}},
+        {"cylinder": {"r": 6, "z": [8, 12.5]}},
+        {"box": [0, -4, 12, 40, 4, 16]},
+        {"cylinder": {"r": 6, "z": [12, 16]}},
+        {"cylinder": {"at": [35, 0], "r": 5, "z": [16, 30], "segments": 32}}
+      ],
+      "color": "#4682B4",
+      "joint": {"type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1]},
+      "gear": {"teeth": 16, "pitchRadiusMm": 8, "rootRadiusMm": 6.75, "thicknessMm": 8},
+      "inertiaKgM2": 1.87e-05
+    },
+    {
+      "id": "rack",
+      "name": "Рейка с площадкой",
+      "shape": [
+        {"box": [1.25, -56.4071, 0, 8.25, 24, 8]},
+        {"rack": {"origin": [0, 0], "direction": [0, 1], "module": 1, "teeth": [-17, 2], "z": [0, 8]}},
+        {"box": [-14, 24, 0, 8.25, 28, 8]}
+      ],
+      "color": "#FFA500",
+      "joint": {"type": "prismatic", "origin": [8.2, 0, 0], "axis": [0, 1, 0]},
+      "massKg": 0.012
+    },
+    {
+      "id": "frame",
+      "name": "Основание с направляющей",
+      "shape": [
+        {"box": [-16, -61.4071, -4, 24.45, 79.0767, -2]},
+        {"box": [16.95, 14, -2, 20.45, 34, 10]},
+        {"box": [16.95, -34, -2, 20.45, -14, 10]},
+        {"box": [10.35, 14, 8.5, 16.95, 34, 10]},
+        {"box": [10.35, -34, 8.5, 16.95, -14, 10]},
+        {"cylinder": {"r": 2.5, "z": [-2, 12]}}
+      ],
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    {"type": "rack", "from": "crank", "to": "rack"}
+  ],
+
+  "designedContacts": [["crank", "frame"]],
+
+  "fasteners": [
+    {"kind": "Ось шестерни", "size": "Ø5×14", "type": "pin", "attachedTo": "frame", "note": "в модели — часть основания"},
+    {"kind": "Винт крепления опор направляющей", "size": "M3×10", "type": "socket-screw", "diameterMm": 3, "lengthMm": 10, "positions": [[18.7, 24, -4], [18.7, -24, -4]], "axis": [0, 0, 1], "attachedTo": "frame"}
+  ]
+}

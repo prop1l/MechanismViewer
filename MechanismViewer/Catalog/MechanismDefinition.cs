@@ -28,6 +28,13 @@ public sealed record MechanismDefinition
     public IReadOnlyList<CouplingSpec> Couplings { get; init; } = [];
     public IReadOnlyList<FastenerSpec> Fasteners { get; init; } = [];
 
+    /// <summary>
+    /// Пары деталей [a, b], которые входят друг в друга по замыслу: ось в ступице, винт в гайке,
+    /// направляющая во втулке (отверстия в моделях не вырезаны). Для проверки пересечений:
+    /// такое пересечение допустимо, если оно не меняется по ходу механизма.
+    /// </summary>
+    public IReadOnlyList<string[]> DesignedContacts { get; init; } = [];
+
     /// <summary>Папка, из которой загружено описание (STL ищутся относительно неё).</summary>
     [JsonIgnore]
     public string Directory { get; init; } = "";

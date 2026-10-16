@@ -62,6 +62,9 @@
     { "type": "gear", "from": "worm", "to": "wheel", "ratio": 0.05 }
   ],
 
+  // Ось колеса в стойках, конец червяка в передней опоре.
+  "designedContacts": [["wheel", "frame"], ["worm", "frame"]],
+
   "fasteners": [
     { "kind": "Ось колеса", "size": "Ø6×30", "type": "pin", "attachedTo": "wheel", "note": "в модели — часть колеса" },
     { "kind": "Стопорный винт ступицы колеса", "size": "M3×4", "type": "set-screw", "attachedTo": "wheel", "note": "только в спецификации" },

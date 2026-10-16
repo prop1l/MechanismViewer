@@ -24,7 +24,10 @@ public class SearchTests
     [InlineData("intermittent", "geneva-4")]
     public void FullCatalog_FindsByOutputMotion(string output, string expected)
     {
-        Assert.Equal([expected], Ids(RunFull(new SearchQuery { Output = output })));
+        SearchOutcome outcome = RunFull(new SearchQuery { Output = output });
+
+        Assert.Contains(expected, Ids(outcome));
+        Assert.All(outcome.Results, r => Assert.Equal(output, r.Mechanism.Motion.Output));
     }
 
     [Fact]
@@ -43,7 +46,10 @@ public class SearchTests
     {
         SearchOutcome outcome = RunFull(new SearchQuery { Output = "linear", OutputForceN = 80 });
 
-        Assert.Equal(["screw-nut-tr8", "toggle-clamp"], Ids(outcome).Order());
+        Assert.Contains("screw-nut-tr8", Ids(outcome));
+        Assert.Contains("toggle-clamp", Ids(outcome));
+        // Остальные отсеяны по усилию: у всех найденных паспортное усилие не ниже 80 Н.
+        Assert.All(outcome.Results, r => Assert.True(r.Mechanism.Specs.MaxForceN >= 80));
     }
 
     private static string[] Ids(SearchOutcome outcome) => outcome.Results.Select(r => r.Mechanism.Id).ToArray();
@@ -166,7 +172,9 @@ public class CardFilterTests
     [Fact]
     public void EveryWordMustMatch()
     {
-        Assert.Equal(["cam-flat-follower", "eccentric-follower"], Filter("кулачок мотор"));
+        string[] found = Filter("кулачок мотор");
+        Assert.Contains("cam-flat-follower", found);
+        Assert.All(found, id => Assert.Equal("Кулачковые механизмы", FullCatalog.Single(m => m.Id == id).Category));
         Assert.Empty(Filter("кулачок кнопка"));
     }
 

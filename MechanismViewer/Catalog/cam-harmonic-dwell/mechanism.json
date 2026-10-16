@@ -1,0 +1,58 @@
+{
+  "id": "cam-harmonic-dwell",
+  "name": "Кулачок с выстоями, гармонический закон",
+  "category": "Кулачковые механизмы",
+  "description": "Подъём на 10 мм за 120° по гармоническому закону, выстой 60°, опускание 120°, выстой 60°. Базовый радиус 18 мм.",
+
+  "motion": {"input": "rotation", "output": "linear"},
+  "specs": {"strokeMm": 10, "maxForceN": 3, "maxSpeedRadS": 20},
+  "envelopeMm": [47, 120, 80],
+
+  "driver": {"type": "motor", "part": "cam", "motorGapMm": 6.0},
+  "output": "follower",
+
+  "parts": [
+    {
+      "id": "cam",
+      "name": "Кулачок",
+      "shape": [
+        {"cam": {"z": [0, 8]}},
+        {"cylinder": {"r": 6, "z": [-2, 10]}}
+      ],
+      "color": "#4682B4",
+      "joint": {"type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1]},
+      "inertiaKgM2": 9.58e-06
+    },
+    {
+      "id": "follower",
+      "name": "Толкатель",
+      "shape": [
+        {"box": [-14, 0, 0, 14, 3, 8]},
+        {"box": [-3, 3, 2, 3, 40, 6]},
+        {"box": [-6, 40, 1, 6, 44, 7]}
+      ],
+      "color": "#FFA500",
+      "joint": {"type": "prismatic", "origin": [0, 18, 0], "axis": [0, 1, 0]},
+      "massKg": 0.004
+    },
+    {
+      "id": "frame",
+      "name": "Стойка с направляющей",
+      "shape": [
+        {"box": [-23.5, 22, -4, 23.5, 62, -2]},
+        {"box": [-9, 34, -2, -3.2, 54, 8]},
+        {"box": [3.2, 34, -2, 9, 54, 8]}
+      ],
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    {"type": "cam", "from": "cam", "to": "follower", "segments": [{"angleDeg": 120, "riseMm": 10, "law": "harmonic"}, {"angleDeg": 60}, {"angleDeg": 120, "riseMm": -10, "law": "harmonic"}, {"angleDeg": 60}]}
+  ],
+
+  "fasteners": [
+    {"kind": "Пружина прижима толкателя", "size": "Ø8×25", "type": "spring", "attachedTo": "follower", "note": "в модели не показана: контакт обеспечивает кинематика"},
+    {"kind": "Винт крепления стойки", "size": "M3×8", "type": "socket-screw", "diameterMm": 3, "lengthMm": 8, "positions": [[-18.5, 30, -2], [18.5, 30, -2]], "axis": [0, 0, -1], "attachedTo": "frame"}
+  ]
+}

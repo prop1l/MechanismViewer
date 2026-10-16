@@ -62,6 +62,9 @@
     { "type": "screw", "from": "screw", "to": "nut", "leadMm": -2 }
   ],
 
+  // Винт в резьбе гайки, направляющая во втулке гайки, конец винта в торцевой опоре.
+  "designedContacts": [["screw", "nut"], ["nut", "frame"], ["screw", "frame"]],
+
   "fasteners": [
     { "kind": "Муфта вала мотора с винтом", "size": "5×8", "attachedTo": "screw", "note": "входит в модель мотора (ступица)" },
     {

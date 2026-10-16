@@ -67,6 +67,9 @@
     { "type": "screw", "from": "screw", "to": "table", "leadMm": -2 }
   ],
 
+  // Винт в подпятнике и траверсе, направляющие во втулках столика, винт в гайке столика.
+  "designedContacts": [["screw", "frame"], ["table", "frame"], ["screw", "table"]],
+
   "fasteners": [
     { "kind": "Упорный подшипник винта", "size": "51100", "attachedTo": "frame", "note": "в модели — подпятник основания" },
     { "kind": "Втулка скольжения направляющей", "size": "Ø6/Ø12×16", "count": 2, "attachedTo": "table", "note": "в модели — часть столика" },

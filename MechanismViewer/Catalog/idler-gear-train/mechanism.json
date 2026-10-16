@@ -68,6 +68,9 @@
     { "type": "gear", "from": "idler", "to": "output" }
   ],
 
+  // Оси паразитной шестерни и колеса — часть плиты.
+  "designedContacts": [["idler", "frame"], ["output", "frame"]],
+
   "fasteners": [
     { "kind": "Стопорный винт ступицы", "size": "M3×4", "type": "set-screw", "attachedTo": "drive", "note": "входит в модель мотора" },
     { "kind": "Ось паразитной шестерни", "size": "Ø4×9", "type": "pin", "attachedTo": "frame", "note": "в модели — часть плиты" },

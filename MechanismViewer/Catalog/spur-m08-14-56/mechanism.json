@@ -1,0 +1,59 @@
+{
+  "id": "spur-m08-14-56",
+  "name": "Цилиндрическая пара 14/56, m0,8",
+  "category": "Зубчатые передачи",
+  "description": "Шестерня z14 на валу мотора вращает колесо z56 со стрелкой: понижающая передача 1:4, межосевое 28 мм. Колесо вращается в обратную сторону.",
+
+  "motion": {"input": "rotation", "output": "rotation"},
+  "specs": {"ratio": 0.25, "maxTorqueNm": 0.016, "maxSpeedRadS": 40},
+  "envelopeMm": [77, 56, 80],
+
+  "driver": {"type": "motor", "part": "drive", "motorGapMm": 6.0, "hubSeatMm": 6.0},
+  "output": "driven",
+
+  "parts": [
+    {
+      "id": "drive",
+      "name": "Шестерня z14",
+      "shape": [
+        {"gear": {"module": 0.8, "teeth": 14, "z": [0, 6]}}
+      ],
+      "color": "#4682B4",
+      "joint": {"type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1]},
+      "gear": {"teeth": 14, "pitchRadiusMm": 5.6, "rootRadiusMm": 4.6, "thicknessMm": 6}
+    },
+    {
+      "id": "driven",
+      "name": "Колесо z56 со стрелкой",
+      "shape": [
+        {"gear": {"module": 0.8, "teeth": 56, "phaseDeg": 183.2143, "z": [0, 6]}},
+        {"cylinder": {"r": 5, "z": [-1, 8]}},
+        {"polygon": {"points": [[0, -2], [20.4, -0.6], [20.4, 0.6], [0, 2]], "z": [6, 7.5]}}
+      ],
+      "color": "#FFA500",
+      "joint": {"type": "revolute", "origin": [28, 0, 0], "axis": [0, 0, 1]},
+      "gear": {"teeth": 56, "pitchRadiusMm": 22.4, "rootRadiusMm": 21.4, "thicknessMm": 6}
+    },
+    {
+      "id": "frame",
+      "name": "Плита с осью",
+      "shape": [
+        {"box": [15.5, -28.2, -3.2, 59.2, 28.2, -1.2]},
+        {"cylinder": {"at": [28, 0], "r": 2, "z": [-1.2, 8]}}
+      ],
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    {"type": "gear", "from": "drive", "to": "driven"}
+  ],
+
+  "designedContacts": [["driven", "frame"]],
+
+  "fasteners": [
+    {"kind": "Стопорный винт ступицы", "size": "M3×4", "type": "set-screw", "attachedTo": "drive", "note": "входит в модель мотора"},
+    {"kind": "Ось колеса", "size": "Ø4×10", "type": "pin", "attachedTo": "frame", "note": "в модели — часть плиты"},
+    {"kind": "Винт крепления плиты", "size": "M3×6", "type": "socket-screw", "diameterMm": 3, "lengthMm": 6, "positions": [[55.2, 24.2, -1.2], [55.2, -24.2, -1.2]], "axis": [0, 0, -1], "attachedTo": "frame"}
+  ]
+}

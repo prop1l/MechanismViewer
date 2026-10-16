@@ -1,0 +1,74 @@
+{
+  "id": "four-bar-10-45-30-45",
+  "name": "Кривошипно-коромысловый четырёхзвенник 10/45/30/45",
+  "category": "Рычажные механизмы",
+  "description": "Кривошип 10 мм, шатун 45 мм, коромысло 30 мм, стойка 45 мм (условие Грасгофа выполнено): полный оборот кривошипа качает коромысло на 41,1°.",
+
+  "motion": {"input": "rotation", "output": "oscillation"},
+  "specs": {"angleDeg": 41.1, "maxTorqueNm": 0.01, "maxSpeedRadS": 20},
+  "envelopeMm": [93, 62, 80],
+
+  "driver": {"type": "motor", "part": "crank", "motorGapMm": 6.0, "shaftEndMm": 4.5},
+  "output": "rocker",
+
+  "parts": [
+    {
+      "id": "crank",
+      "name": "Кривошип",
+      "shape": [
+        {"cylinder": {"r": 6, "z": [0, 5]}},
+        {"box": [0, -4, 0, 10, 4, 5]},
+        {"cylinder": {"at": [10, 0], "r": 4, "z": [0, 5]}},
+        {"cylinder": {"at": [10, 0], "r": 2, "z": [5, 10], "segments": 24}}
+      ],
+      "color": "#4682B4",
+      "joint": {"type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1]},
+      "inertiaKgM2": 1.25e-07
+    },
+    {
+      "id": "rocker",
+      "name": "Коромысло",
+      "shape": [
+        {"cylinder": {"r": 5, "z": [0, 5]}},
+        {"box": [0, -3.5, 0, 30, 3.5, 5]},
+        {"cylinder": {"at": [30, 0], "r": 4, "z": [0, 5]}},
+        {"cylinder": {"at": [30, 0], "r": 2, "z": [5, 10], "segments": 24}},
+        {"box": [-12, -1.5, 0, 0, 1.5, 5]}
+      ],
+      "color": "#FFA500",
+      "joint": {"type": "revolute", "origin": [45, 0, 0], "axis": [0, 0, 1], "phase": 92.7294},
+      "inertiaKgM2": 3e-06
+    },
+    {
+      "id": "coupler",
+      "name": "Шатун",
+      "shape": [
+        {"box": [0, -2.5, 5.5, 45, 2.5, 9]},
+        {"cylinder": {"r": 4, "z": [5.5, 9]}},
+        {"cylinder": {"at": [45, 0], "r": 4, "z": [5.5, 9]}}
+      ],
+      "color": "#B0B7C0",
+      "joint": {"type": "link", "axis": [0, 0, 1], "link": {"from": "crank", "fromPoint": [10, 0, 0], "to": "rocker", "toPoint": [30, 0, 0]}}
+    },
+    {
+      "id": "frame",
+      "name": "Стойка",
+      "shape": [
+        {"box": [20, -18, -4, 73, 44, -2]},
+        {"cylinder": {"at": [45, 0], "r": 7, "z": [-2, 0]}}
+      ],
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    {"type": "four-bar", "from": "crank", "to": "rocker", "crankMm": 10, "couplerMm": 45, "rockerMm": 30, "branch": 1}
+  ],
+
+  "fasteners": [
+    {"kind": "Палец шарнира кривошип — шатун", "size": "Ø4×10", "type": "pin", "attachedTo": "crank", "note": "в модели — часть кривошипа"},
+    {"kind": "Палец шарнира шатун — коромысло", "size": "Ø4×10", "type": "pin", "attachedTo": "rocker", "note": "в модели — часть коромысла"},
+    {"kind": "Ось коромысла", "size": "Ø5×12", "type": "pin", "attachedTo": "rocker", "note": "только в спецификации"},
+    {"kind": "Винт крепления стойки", "size": "M3×8", "type": "socket-screw", "diameterMm": 3, "lengthMm": 8, "positions": [[68, -13, -2], [68, 39, -2]], "axis": [0, 0, -1], "attachedTo": "frame"}
+  ]
+}

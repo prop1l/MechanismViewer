@@ -1,0 +1,60 @@
+{
+  "id": "geneva-5",
+  "name": "Мальтийский крест на 5 пазов",
+  "category": "Механизмы прерывистого движения",
+  "description": "Ведущий диск с пальцем на r = 26,5 мм за оборот поворачивает крест на 360°/5 = 72°, остальное время крест заперт дугой диска. Межосевое 45 мм.",
+
+  "motion": {"input": "rotation", "output": "intermittent"},
+  "specs": {"angleDeg": 72, "maxTorqueNm": 0.01, "maxSpeedRadS": 20},
+  "envelopeMm": [111, 83, 83],
+
+  "driver": {"type": "motor", "part": "driver", "motorGapMm": 6.0, "hubSeatMm": 11.0},
+  "output": "star",
+
+  "parts": [
+    {
+      "id": "driver",
+      "name": "Ведущий диск с пальцем",
+      "shape": [
+        {"cylinder": {"r": 6, "z": [0, 6]}},
+        {"box": [0, -4, 0, 26.4503, 4, 5]},
+        {"genevaDisk": {"slots": 5, "centerDistance": 45, "slotWidth": 6.4, "pinRadius": 3, "z": [6, 11]}},
+        {"cylinder": {"at": [26.4503, 0], "r": 3, "z": [0, 12], "segments": 24}}
+      ],
+      "color": "#4682B4",
+      "joint": {"type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1], "phase": 180},
+      "inertiaKgM2": 3.4e-06
+    },
+    {
+      "id": "star",
+      "name": "Крест",
+      "shape": [
+        {"genevaStar": {"slots": 5, "centerDistance": 45, "slotWidth": 6.4, "pinRadius": 3, "z": [6, 11]}},
+        {"cylinder": {"r": 4, "z": [4, 13]}}
+      ],
+      "color": "#FFA500",
+      "joint": {"type": "revolute", "origin": [45, 0, 0], "axis": [0, 0, 1], "phase": 36},
+      "inertiaKgM2": 8.24e-06,
+      "coulombFriction": 0.0001
+    },
+    {
+      "id": "frame",
+      "name": "Основание",
+      "shape": [
+        {"box": [20, -41.4058, -4, 91.4058, 41.4058, -2]},
+        {"cylinder": {"at": [45, 0], "r": 6, "z": [-2, 4]}}
+      ],
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    {"type": "geneva", "from": "driver", "to": "star", "slots": 5}
+  ],
+
+  "fasteners": [
+    {"kind": "Палец ведущего диска", "size": "Ø6×12", "type": "pin", "attachedTo": "driver", "note": "в модели — часть диска"},
+    {"kind": "Ось креста", "size": "Ø6×16", "type": "pin", "attachedTo": "star", "note": "только в спецификации"},
+    {"kind": "Винт крепления основания", "size": "M3×8", "type": "socket-screw", "diameterMm": 3, "lengthMm": 8, "positions": [[87.4058, 37.4058, -2], [87.4058, -37.4058, -2]], "axis": [0, 0, -1], "attachedTo": "frame"}
+  ]
+}
