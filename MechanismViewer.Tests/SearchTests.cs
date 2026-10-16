@@ -166,7 +166,7 @@ public class CardFilterTests
     [Fact]
     public void EveryWordMustMatch()
     {
-        Assert.Equal(["cam-flat-follower"], Filter("кулачок мотор"));
+        Assert.Equal(["cam-flat-follower", "eccentric-follower"], Filter("кулачок мотор"));
         Assert.Empty(Filter("кулачок кнопка"));
     }
 

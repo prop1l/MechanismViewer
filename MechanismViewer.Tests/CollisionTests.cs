@@ -32,6 +32,12 @@ public class CollisionTests(ITestOutputHelper output)
         ["worm-1-20"] = [("wheel", "frame"), ("worm", "frame")],
         // Оси блок-шестерни, колеса и указателя — часть основания.
         ["gearbox-slider-indicator"] = [("cluster", "frame"), ("crankGear", "frame"), ("indicator", "frame")],
+        // Ось шестерни с рукояткой — часть стенки.
+        ["rack-jack-crank"] = [("crank", "frame")],
+        // Винт в подпятнике и траверсе, направляющие во втулках столика, винт в гайке столика.
+        ["screw-table-handwheel"] = [("screw", "frame"), ("table", "frame"), ("screw", "table")],
+        // Оси паразитной шестерни и колеса — часть плиты.
+        ["idler-gear-train"] = [("idler", "frame"), ("output", "frame")],
     };
 
     private static void RunSta(Action action)
@@ -242,18 +248,36 @@ public class CollisionTests(ITestOutputHelper output)
 
         int count = 0;
         double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
-        for (double x = box.X + Cell / 2; x < box.X + box.SizeX; x += Cell)
+        double endX = box.X + box.SizeX, endY = box.Y + box.SizeY, endZ = box.Z + box.SizeZ;
+
+        // Грубые ячейки 2 мм: мелкие точки проверяются только там, где оба тела могут быть.
+        for (double cx = box.X; cx < endX; cx += Body.Coarse)
         {
-            for (double y = box.Y + Cell / 2; y < box.Y + box.SizeY; y += Cell)
+            for (double cy = box.Y; cy < endY; cy += Body.Coarse)
             {
-                for (double z = box.Z + Cell / 2; z < box.Z + box.SizeZ; z += Cell)
+                for (double cz = box.Z; cz < endZ; cz += Body.Coarse)
                 {
-                    var p = new Point3D(x, y, z);
-                    if (a.Contains(p) && b.Contains(p))
+                    var center = new Point3D(cx + Body.Coarse / 2, cy + Body.Coarse / 2, cz + Body.Coarse / 2);
+                    if (!a.MayContain(center) || !b.MayContain(center))
                     {
-                        count++;
-                        minX = Math.Min(minX, x); minY = Math.Min(minY, y); minZ = Math.Min(minZ, z);
-                        maxX = Math.Max(maxX, x); maxY = Math.Max(maxY, y); maxZ = Math.Max(maxZ, z);
+                        continue;
+                    }
+
+                    for (double x = cx + Cell / 2; x < Math.Min(cx + Body.Coarse, endX); x += Cell)
+                    {
+                        for (double y = cy + Cell / 2; y < Math.Min(cy + Body.Coarse, endY); y += Cell)
+                        {
+                            for (double z = cz + Cell / 2; z < Math.Min(cz + Body.Coarse, endZ); z += Cell)
+                            {
+                                var p = new Point3D(x, y, z);
+                                if (a.Contains(p) && b.Contains(p))
+                                {
+                                    count++;
+                                    minX = Math.Min(minX, x); minY = Math.Min(minY, y); minZ = Math.Min(minZ, z);
+                                    maxX = Math.Max(maxX, x); maxY = Math.Max(maxY, y); maxZ = Math.Max(maxZ, z);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -267,8 +291,14 @@ public class CollisionTests(ITestOutputHelper output)
     /// <summary>Тело в своей системе координат: воксельная карта «внутри» по числу оборотов (winding) вдоль Z.</summary>
     private sealed class Body(string name, string? part, bool isFastener, bool isStatic, ModelVisual3D visual, List<(Point3D A, Point3D B, Point3D C)> tris)
     {
+        /// <summary>Размер грубой ячейки, мм; кратен <see cref="Cell"/>.</summary>
+        public const double Coarse = 2.0;
+
         private const double Step = Cell / 2;
         private BitArray _inside = new(0);
+        private BitArray _coarse = new(0);
+        private int _cnx, _cny, _cnz;
+        private bool _rigid = true;
         private double _x0, _y0, _z0;
         private int _nx, _ny, _nz;
         private Matrix3D _toLocal;
@@ -355,12 +385,77 @@ public class CollisionTests(ITestOutputHelper output)
                     }
                 }
             }
+
+            BuildCoarse();
+        }
+
+        /// <summary>
+        /// Грубая карта: ячейка 2 мм отмечена, если рядом (с соседями) есть мелкий воксель тела.
+        /// Центр мировой грубой ячейки отстоит от любой её точки меньше чем на 2 мм, поэтому
+        /// при жёстком положении тела «нет рядом» гарантирует, что внутри ячейки тела нет.
+        /// </summary>
+        private void BuildCoarse()
+        {
+            // С запасом в одну ячейку по краям — для соседей.
+            _cnx = (int)Math.Ceiling(_nx * Step / Coarse) + 2;
+            _cny = (int)Math.Ceiling(_ny * Step / Coarse) + 2;
+            _cnz = (int)Math.Ceiling(_nz * Step / Coarse) + 2;
+            var hit = new BitArray(_cnx * _cny * _cnz);
+            for (int i = 0; i < _nx; i++)
+            {
+                for (int j = 0; j < _ny; j++)
+                {
+                    for (int k = 0; k < _nz; k++)
+                    {
+                        if (_inside[(i * _ny + j) * _nz + k])
+                        {
+                            hit[CoarseIndex((int)(i * Step / Coarse) + 1, (int)(j * Step / Coarse) + 1, (int)(k * Step / Coarse) + 1)] = true;
+                        }
+                    }
+                }
+            }
+
+            _coarse = new BitArray(hit.Length);
+            for (int i = 1; i < _cnx - 1; i++)
+            {
+                for (int j = 1; j < _cny - 1; j++)
+                {
+                    for (int k = 1; k < _cnz - 1; k++)
+                    {
+                        if (!hit[CoarseIndex(i, j, k)])
+                        {
+                            continue;
+                        }
+
+                        for (int di = -1; di <= 1; di++)
+                            for (int dj = -1; dj <= 1; dj++)
+                                for (int dk = -1; dk <= 1; dk++)
+                                    _coarse[CoarseIndex(i + di, j + dj, k + dk)] = true;
+                    }
+                }
+            }
+        }
+
+        private int CoarseIndex(int i, int j, int k) => (i * _cny + j) * _cnz + k;
+
+        /// <summary>Может ли тело заходить в мировую грубую ячейку с центром <paramref name="world"/> (ложных «нет» не бывает).</summary>
+        public bool MayContain(Point3D world)
+        {
+            if (!_rigid)
+            {
+                return true; // растянутая пружина: расстояния в её системе не совпадают с мировыми
+            }
+
+            Point3D p = _toLocal.Transform(world);
+            int i = (int)Math.Floor((p.X - _x0) / Coarse) + 1, j = (int)Math.Floor((p.Y - _y0) / Coarse) + 1, k = (int)Math.Floor((p.Z - _z0) / Coarse) + 1;
+            return i >= 0 && j >= 0 && k >= 0 && i < _cnx && j < _cny && k < _cnz && _coarse[CoarseIndex(i, j, k)];
         }
 
         public void SetPose(Matrix3D pose)
         {
             _toLocal = pose;
             _toLocal.Invert();
+            _rigid = Math.Abs(Math.Abs(pose.Determinant) - 1) < 1e-6;
             WorldBox = tris.Count == 0 ? Rect3D.Empty : Transform(_localBox, pose);
         }
 

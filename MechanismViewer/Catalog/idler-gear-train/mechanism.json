@@ -1,0 +1,87 @@
+{
+  "id": "idler-gear-train",
+  "name": "Передача 20/30 с паразитной шестернёй",
+  "category": "Зубчатые передачи",
+  "description": "Шестерня z20 на валу мотора через паразитную z14 вращает колесо z30 со стрелкой. Паразитная шестерня не меняет передаточное число (20/30 = 1:1,5), но сохраняет направление вращения и разносит валы на 39 мм.",
+
+  "motion": { "input": "rotation", "output": "rotation" },
+  "specs": { "ratio": 0.6667, "maxTorqueNm": 0.05, "maxSpeedRadS": 40 },
+  "envelopeMm": [84, 48, 80],
+
+  // Ступица мотора прижимает ведущую шестерню по торцу z = 6.
+  "driver": { "type": "motor", "part": "drive", "motorGapMm": 6.0, "hubSeatMm": 6.0 },
+  "output": "output",
+
+  "parts": [
+    {
+      "id": "drive",
+      "name": "Ведущая шестерня z20",
+      // m1, зуб на 0° — к паразитной.
+      "shape": [
+        { "gear": { "module": 1, "teeth": 20, "z": [0, 6] } }
+      ],
+      "color": "#4682B4",
+      "joint": { "type": "revolute", "origin": [0, 0, 0], "axis": [0, 0, 1] },
+      "gear": { "teeth": 20, "pitchRadiusMm": 10, "rootRadiusMm": 8.75, "thicknessMm": 6 }
+    },
+    {
+      "id": "idler",
+      "name": "Паразитная шестерня z14",
+      // Межосевое 10 + 7 = 17. Впадина на 180° (к ведущей): зубья на 180° + 360°/28 + k·360°/14,
+      // на 0° (к колесу) при чётном z тоже впадина.
+      "shape": [
+        { "gear": { "module": 1, "teeth": 14, "phaseDeg": 192.857143, "z": [0, 6] } },
+        { "cylinder": { "r": 4, "z": [-1, 7] } }
+      ],
+      "color": "#6B8E23",
+      "joint": { "type": "revolute", "origin": [17, 0, 0], "axis": [0, 0, 1] },
+      "gear": { "teeth": 14, "pitchRadiusMm": 7, "rootRadiusMm": 5.75, "thicknessMm": 6 }
+    },
+    {
+      "id": "output",
+      "name": "Колесо z30 со стрелкой",
+      // Межосевое 7 + 15 = 22 от паразитной. Зуб на 180° — во впадину паразитной; стрелка над колесом смотрит на +X.
+      "shape": [
+        { "gear": { "module": 1, "teeth": 30, "phaseDeg": 180, "z": [0, 6] } },
+        { "cylinder": { "r": 5, "z": [-1, 8] } },
+        { "polygon": { "points": [[0, -2], [13, -0.6], [13, 0.6], [0, 2]], "z": [6, 7.5] } }
+      ],
+      "color": "#FFA500",
+      "joint": { "type": "revolute", "origin": [39, 0, 0], "axis": [0, 0, 1] },
+      "gear": { "teeth": 30, "pitchRadiusMm": 15, "rootRadiusMm": 13.75, "thicknessMm": 6 }
+    },
+    {
+      "id": "frame",
+      "name": "Плита с осями",
+      // Плита перед лицом кронштейна мотора (z −3,5), правее его выступа у вала (x ≥ 15,5).
+      "shape": [
+        { "box": [15.5, -20, -3.2, 62, 20, -1.2] },
+        { "cylinder": { "at": [17, 0], "r": 2, "z": [-1.2, 8] } },
+        { "cylinder": { "at": [39, 0], "r": 2, "z": [-1.2, 9] } }
+      ],
+      "color": "#5A606A"
+    }
+  ],
+
+  "couplings": [
+    { "type": "gear", "from": "drive", "to": "idler" },
+    { "type": "gear", "from": "idler", "to": "output" }
+  ],
+
+  "fasteners": [
+    { "kind": "Стопорный винт ступицы", "size": "M3×4", "type": "set-screw", "attachedTo": "drive", "note": "входит в модель мотора" },
+    { "kind": "Ось паразитной шестерни", "size": "Ø4×9", "type": "pin", "attachedTo": "frame", "note": "в модели — часть плиты" },
+    { "kind": "Ось колеса", "size": "Ø4×10", "type": "pin", "attachedTo": "frame", "note": "в модели — часть плиты" },
+    {
+      "kind": "Винт крепления плиты",
+      "size": "M3×6",
+      "type": "socket-screw",
+      "diameterMm": 3,
+      "lengthMm": 6,
+      // За колесом (r 16): головки не задевают зубья.
+      "positions": [[58, 16, -1.2], [58, -16, -1.2]],
+      "axis": [0, 0, -1],
+      "attachedTo": "frame"
+    }
+  ]
+}

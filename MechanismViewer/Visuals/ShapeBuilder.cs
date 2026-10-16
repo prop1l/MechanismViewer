@@ -23,7 +23,7 @@ public static class ShapeBuilder
         IReadOnlyList<ShapeSpec> shape = part.Shape
             ?? throw new InvalidDataException($"Деталь «{part.Id}»: нет shape");
 
-        var mesh = new Builder(part.ShapeAxis == "x");
+        var mesh = new Builder(part.ShapeAxis);
         foreach (ShapeSpec s in shape)
         {
             if (s.Box is [double x0, double y0, double z0, double x1, double y1, double z1])
@@ -163,13 +163,20 @@ public static class ShapeBuilder
         return (star, disk);
     }
 
-    private sealed class Builder(bool axisX)
+    private sealed class Builder(string axis)
     {
         private readonly Point3DCollection _points = new();
 
         private void Tri(Point3D a, Point3D b, Point3D c)
         {
-            if (axisX)
+            if (axis == "y")
+            {
+                // Поворот на 90° вокруг X: (x, y, z) → (x, z, −y) — ось выдавливания вверх, резьба остаётся правой.
+                _points.Add(new Point3D(a.X, a.Z, -a.Y));
+                _points.Add(new Point3D(b.X, b.Z, -b.Y));
+                _points.Add(new Point3D(c.X, c.Z, -c.Y));
+            }
+            else if (axis == "x")
             {
                 // Перенос Z → X — зеркальное отображение: порядок вершин меняется, чтобы нормали остались наружу.
                 _points.Add(new Point3D(a.Z, a.Y, a.X));

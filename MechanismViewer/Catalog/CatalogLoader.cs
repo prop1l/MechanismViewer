@@ -74,9 +74,9 @@ public static class CatalogLoader
                     throw new InvalidDataException($"{path}: у детали «{part.Id}» в каждом элементе shape должен быть ровно один примитив");
                 }
 
-                if (part.ShapeAxis is not ("z" or "x"))
+                if (part.ShapeAxis is not ("z" or "x" or "y"))
                 {
-                    throw new InvalidDataException($"{path}: у детали «{part.Id}» shapeAxis — z или x");
+                    throw new InvalidDataException($"{path}: у детали «{part.Id}» shapeAxis — z, x или y");
                 }
             }
 
