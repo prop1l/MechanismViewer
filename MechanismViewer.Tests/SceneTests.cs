@@ -67,6 +67,28 @@ public class SceneTests
     }
 
     [Fact]
+    public void ConcurrentBuilds_OfSameShape_ShareOneMesh()
+    {
+        // Все потоки строят одно и то же одновременно — в кэше и у всех должна оказаться одна копия.
+        string description = "test:" + Guid.NewGuid();
+        using var start = new Barrier(8);
+        var results = new MeshGeometry3D[8];
+        Thread[] threads = Enumerable.Range(0, 8).Select(i => new Thread(() =>
+        {
+            results[i] = MeshCache.GetOrAdd(description, () =>
+            {
+                start.SignalAndWait(TimeSpan.FromSeconds(10));
+                return [new MeshGeometry3D()];
+            })[0];
+        })).ToArray();
+
+        foreach (Thread t in threads) t.Start();
+        foreach (Thread t in threads) t.Join();
+
+        Assert.All(results, r => Assert.Same(results[0], r));
+    }
+
+    [Fact]
     public void SharedMeshes_KeepPerPartHighlight()
     {
         RunSta(() =>

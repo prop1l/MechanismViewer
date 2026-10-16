@@ -59,6 +59,12 @@ public static class MeshCache
 
         lock (Sync)
         {
+            // Пока строили, ту же сетку мог положить другой поток — берём его, чтобы копия была одна.
+            if (Entries.TryGetValue(key, out WeakReference<MeshGeometry3D>[]? raced) && TryGetAll(raced) is { } existing)
+            {
+                return existing;
+            }
+
             foreach (string dead in Entries.Where(e => TryGetAll(e.Value) is null).Select(e => e.Key).ToList())
             {
                 Entries.Remove(dead);
