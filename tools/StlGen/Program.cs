@@ -52,7 +52,7 @@ static void CrankSlider(string dir)
     // Кривошип: ось вращения — Z через начало координат, палец на (15, 0).
     Save(dir, "Crank", m =>
     {
-        m.Cyl(0, 0, 6, 0, 6);
+        m.Cyl(0, 0, 6, 0, 5);                          // ступица не выше плеча: над ней проходит шатун
         m.Box(0, -4, 0, 15, 4, 5);
         m.Cyl(15, 0, 4, 0, 5);
         m.Cyl(15, 0, 2, 5, 10, 24);
@@ -74,8 +74,11 @@ static void CrankSlider(string dir)
     Save(dir, "Guide", m =>
     {
         m.Box(25, -13, 0, 85, 13, 2);
-        m.Box(25, 7.5, 2, 85, 10.5, 18);
-        m.Box(25, -10.5, 2, 85, -7.5, 18);
+        // При x < 40 наклонный шатун (z 5,5…9) выходит за |y| = 7,5 — там рельсы только над ним.
+        m.Box(40, 7.5, 2, 85, 10.5, 18);
+        m.Box(40, -10.5, 2, 85, -7.5, 18);
+        m.Box(25, 7.5, 9.5, 40, 10.5, 18);
+        m.Box(25, -10.5, 9.5, 40, -7.5, 18);
     });
 }
 
@@ -135,7 +138,7 @@ static void ButtonRackPinion(string dir)
     {
         m.Box(-12, -18, -4, 32, 30, -2);
         m.Box(-10, -18, -2, 20, -14, 8);
-        m.Box(-7, -14, -2, -4, 28, 6);
+        m.Box(-7, -14, -2, -4, 21.5, 6);               // ниже головки нажатой кнопки (y = 30 − 8)
     });
 }
 
@@ -159,7 +162,7 @@ static void ScrewNut(string dir)
     Save(dir, "Frame", m =>
     {
         m.Cyl(0, 22, 3, -3.5, 76);                     // направляющая
-        m.Box(-20, -24, -6, 20, -21.5, 84);            // основание
+        m.Box(-20, -24, -3.5, 20, -21.5, 84);          // основание — от стенки кронштейна мотора
         m.Box(-12, -21.5, 74, 12, 30, 82);             // торцевая опора
         m.Box(-6, 16, -3.5, 6, 28, 0);                 // крепление направляющей у мотора
     });
@@ -171,7 +174,10 @@ static void Worm(string dir)
     Save(dir, "Worm", m =>
     {
         m.Cyl(0, 0, 5.625, 2, 40);
-        m.Thread(5.625, 9.0, Math.PI * 1.5, 4, 38, 3.0, 1.2);
+        // Начало витка — так, чтобы впадина под осью колеса (z = 21) была по центру зуба колеса:
+        // на угле 90° середина впадины на z0 + p·(k + 1/4) + p/2.
+        double p = Math.PI * 1.5, z0 = 21 - p * (3 + 0.25) - p / 2;
+        m.Thread(5.625, 9.0, p, z0, 38, 3.0, 1.2);
         m.Cyl(0, 0, 3, 0, 46);
     });
     // Колесо z20 m1,5, ось X: строится в плоскости XY и переносится (x, y, z) → (z, y, x).
@@ -185,7 +191,7 @@ static void Worm(string dir)
     });
     Save(dir, "Frame", m =>
     {
-        m.Box(-22, -24, -6, 22, -21.5, 50);
+        m.Box(-22, -24, -3.5, 22, -21.5, 50);          // основание — от стенки кронштейна мотора
         m.Box(-8, -21.5, 44, 8, 4, 50);                // передняя опора червяка
         m.Box(10, -21.5, 16, 14, 26, 26);              // стойки оси колеса
         m.Box(-14, -21.5, 16, -10, 26, 26);
@@ -197,7 +203,7 @@ static void FourBar(string dir)
     // Кривошип 15, шатун 55, коромысло 35, стойка 60 (оси в (0, 0) и (60, 0)).
     Save(dir, "Crank", m =>
     {
-        m.Cyl(0, 0, 6, 0, 6);
+        m.Cyl(0, 0, 6, 0, 5);                          // ступица не выше плеча: над ней проходит шатун
         m.Box(0, -4, 0, 15, 4, 5);
         m.Cyl(15, 0, 4, 0, 5);
         m.Cyl(15, 0, 2, 5, 10, 24);
@@ -356,7 +362,7 @@ static void Geneva(string dir)
     });
     Save(dir, "Frame", m =>
     {
-        m.Box(10, -32, -4, 75, 32, -2);
+        m.Box(20, -32, -4, 75, 32, -2);                // за кронштейном мотора (|x| ≤ 18)
         m.Cyl(40, 0, 6, -2, 4);
     });
 }
@@ -370,8 +376,8 @@ static void ToggleClamp(string dir)
         m.Box(0, -4, 0, 20, 4, 5);
         m.Cyl(20, 0, 4.5, 0, 5);
         m.Cyl(20, 0, 2, 5, 10, 24);
-        m.Box(20, -4, 0, 78, 4, 5);
-        m.Box(78, -7, -1, 102, 7, 5);                  // рукоять
+        m.Box(20, -4, 0, 56, 4, 5);
+        m.Box(56, -7, -1, 76, 7, 5);                   // рукоять: в закрытом положении не доходит до направляющей (x = 78)
     });
     Save(dir, "Link", m =>
     {
@@ -382,7 +388,8 @@ static void ToggleClamp(string dir)
     // Плунжер: начало координат — палец тяги.
     Save(dir, "Plunger", m =>
     {
-        m.Box(-5, -5, 5.5, 8, 5, 10);
+        m.Cyl(0, 0, 2, 5, 10.5, 24);                   // палец в проушину тяги
+        m.Box(-5, -5, 10, 10, 5, 14);                  // колодка над тягой (z 5,5…9)
         m.Box(8, -3, 5.5, 60, 3, 10);
         m.Box(60, -7, 3.5, 64, 7, 12);
     });
@@ -451,6 +458,9 @@ sealed class Mesh
         }
     }
 
+    /// <summary>Боковой зазор на каждую сторону зуба, доля модуля: прямые боковины трапеции вместо эвольвенты иначе врезаются в ответный зуб.</summary>
+    private const double Backlash = 0.1;
+
     /// <summary>Прямозубое колесо (зуб — трапеция с углом профиля 20°), первый зуб на phaseDeg.</summary>
     public void Gear(double cx, double cy, double m, int z, double phaseDeg, double z0, double z1)
     {
@@ -463,7 +473,8 @@ sealed class Mesh
             var v = new Vector2(-u.Y, u.X);
             var c = new Vector2((float)cx, (float)cy);
             double rho0 = rf - 0.3;
-            float h0 = (float)(Math.PI * m / 4 + (r - rho0) * tan), h1 = (float)Math.Max(0.15 * m, Math.PI * m / 4 - (ra - r) * tan);
+            double half = Math.PI * m / 4 - Backlash * m;
+            float h0 = (float)(half + (r - rho0) * tan), h1 = (float)Math.Max(0.15 * m, half - (ra - r) * tan);
             Polygon([c + u * (float)rho0 - v * h0, c + u * (float)ra - v * h1, c + u * (float)ra + v * h1, c + u * (float)rho0 + v * h0], z0, z1);
         }
     }
@@ -479,7 +490,8 @@ sealed class Mesh
         var n = new Vector2((float)-sy, (float)sx);
         double tan = Math.Tan(20 * Math.PI / 180);
         double n0 = -1.25 * m - 0.3, n1 = m;
-        double h0 = Math.PI * m / 4 - n0 * tan, h1 = Math.PI * m / 4 - n1 * tan;
+        double half = Math.PI * m / 4 - Backlash * m;
+        double h0 = half - n0 * tan, h1 = half - n1 * tan;
 
         Vector2 P(double along, double normal) => o + s * (float)along + n * (float)normal;
 

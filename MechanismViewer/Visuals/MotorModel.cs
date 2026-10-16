@@ -57,9 +57,15 @@ public sealed class MotorModel
     public ModelVisual3D Stator { get; }
     public ModelVisual3D Rotor { get; }
 
-    public MotorModel(double gapToGearMm)
+    /// <param name="gapToGearMm">Зазор от заднего торца ведущей детали (z = 0) до фланца мотора.</param>
+    /// <param name="hubSeatMm">Передний торец ведущей детали, к которому ступица мотора прижимает её.</param>
+    /// <param name="shaftEndMm">
+    /// Если задан — вал кончается внутри ступицы самой детали на этой высоте, а ступица мотора не ставится
+    /// (деталь зажата своим стопорным винтом, а над ней ходят шатуны).
+    /// </param>
+    public MotorModel(double gapToGearMm, double hubSeatMm = 10.0, double? shaftEndMm = null)
     {
-        var layout = new Layout(gapToGearMm);
+        var layout = new Layout(gapToGearMm, hubSeatMm, shaftEndMm);
         Stator = new ModelVisual3D { Content = BuildStator(layout) };
         Rotor = new ModelVisual3D { Content = BuildRotor(layout) };
     }
@@ -78,8 +84,10 @@ public sealed class MotorModel
     }
 
     /// <summary>Ключевые координаты вдоль оси Z.</summary>
-    private readonly struct Layout(double gap)
+    private readonly struct Layout(double gap, double hubSeat, double? shaftEnd)
     {
+        public double HubSeat { get; } = hubSeat;                        // передний торец ведущей детали
+        public double? ShaftEnd { get; } = shaftEnd;                     // задан — вал без ступицы мотора
         public double CanFront { get; } = -gap;                          // передний торец стакана = тыл кронштейна
         public double BracketFront { get; } = -gap + BracketThickness;
         public double CanBack { get; } = -gap - CanLength;
@@ -391,9 +399,9 @@ public sealed class MotorModel
         var g = new Model3DGroup();
         Frame w = Frame.World;
         double ze = l.CapBack;
-        const double gearFront = 10.0, hubFront = 15.5;
+        double gearFront = l.HubSeat, hubFront = gearFront + 5.5;
 
-        double s0 = ze - 5.2, s1 = hubFront + 2.0, ch = 0.3, r = ShaftRadius - 0.03;
+        double s0 = ze - 5.2, s1 = l.ShaftEnd ?? hubFront + 2.0, ch = 0.3, r = ShaftRadius - 0.03;
         g.Children.Add(new MeshKit().Lathe(w, new Profile()
             .Hard(s0, 0).Hard(s0, r - ch).Hard(s0 + ch, r)
             .Hard(s1 - ch, r).Hard(s1, r - ch).Hard(s1, 0), 40).Build(Polished));
@@ -401,17 +409,20 @@ public sealed class MotorModel
         // Латунная распорная втулка между кронштейном и шестернёй.
         g.Children.Add(new MeshKit().Lathe(w, Chamfered(l.BracketFront + 0.2, -0.15, ShaftRadius, 3.2, 0.3), Smooth).Build(Brass));
 
-        // Ступица, прижимающая шестерню, со стопорным винтом.
-        g.Children.Add(new MeshKit().Lathe(w, Chamfered(gearFront + 0.15, hubFront, ShaftRadius, 5.5, 0.45), Smooth).Build(Polished));
+        if (l.ShaftEnd is null)
+        {
+            // Ступица, прижимающая шестерню, со стопорным винтом.
+            g.Children.Add(new MeshKit().Lathe(w, Chamfered(gearFront + 0.15, hubFront, ShaftRadius, 5.5, 0.45), Smooth).Build(Polished));
 
-        var screwAxis = Frame.Along(new Point3D(5.5 - 0.1, 0, (gearFront + hubFront) / 2 + 0.3), new Vector3D(1, 0, 0));
-        g.Children.Add(new MeshKit().Lathe(screwAxis, Disc(0, 0.16, 1.25), 24).Build(BlackOxide));
-        g.Children.Add(new MeshKit().Prism(screwAxis, Circle(0, 0, 0.62, 6), 0.1, 0.19).Build(Hole));
+            var screwAxis = Frame.Along(new Point3D(5.5 - 0.1, 0, (gearFront + hubFront) / 2 + 0.3), new Vector3D(1, 0, 0));
+            g.Children.Add(new MeshKit().Lathe(screwAxis, Disc(0, 0.16, 1.25), 24).Build(BlackOxide));
+            g.Children.Add(new MeshKit().Prism(screwAxis, Circle(0, 0, 0.62, 6), 0.1, 0.19).Build(Hole));
 
-        // Гравировка-риска на ступице — видно вращение даже на малых оборотах.
-        g.Children.Add(new MeshKit()
-            .Box(w, 0, (ShaftRadius + 5.5 - 0.45) / 2, hubFront + 0.01, 0.5, 5.5 - 0.45 - ShaftRadius - 0.3, 0.04)
-            .Build(Marker));
+            // Гравировка-риска на ступице — видно вращение даже на малых оборотах.
+            g.Children.Add(new MeshKit()
+                .Box(w, 0, (ShaftRadius + 5.5 - 0.45) / 2, hubFront + 0.01, 0.5, 5.5 - 0.45 - ShaftRadius - 0.3, 0.04)
+                .Build(Marker));
+        }
 
         g.Children.Add(new MeshKit().Lathe(w, Chamfered(ze - 4.9, ze - 2.4, ShaftRadius, 3.0, 0.25), 48).Build(Brass));
         g.Children.Add(new MeshKit().Lathe(w, Annulus(ze - 3.9, ze - 3.5, 2.9, 6.5), Smooth).Build(Polished));

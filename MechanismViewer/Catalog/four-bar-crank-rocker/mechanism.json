@@ -8,7 +8,8 @@
   "specs": { "angleDeg": 51.2, "maxTorqueNm": 0.02, "maxSpeedRadS": 20 },
   "envelopeMm": [104, 67, 80],
 
-  "driver": { "type": "motor", "part": "crank", "motorGapMm": 6.0 },
+  // Вал мотора кончается в ступице кривошипа: над ней проходит шатун.
+  "driver": { "type": "motor", "part": "crank", "motorGapMm": 6.0, "shaftEndMm": 4.5 },
   "output": "rocker",
 
   "parts": [

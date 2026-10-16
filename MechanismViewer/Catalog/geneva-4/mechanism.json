@@ -8,7 +8,7 @@
   "specs": { "angleDeg": 90, "maxTorqueNm": 0.02, "maxSpeedRadS": 15 },
   "envelopeMm": [106, 64, 83],
 
-  "driver": { "type": "motor", "part": "driver", "motorGapMm": 6.0 },
+  "driver": { "type": "motor", "part": "driver", "motorGapMm": 6.0, "hubSeatMm": 11.0 },
   "output": "star",
 
   "parts": [

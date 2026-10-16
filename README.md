@@ -151,7 +151,7 @@ mechanism.json ──► CatalogLoader ──► MechanismDefinition
 }
 ```
 
-4. Запустить `dotnet test MechanismViewer.Tests`. Тест `EveryCatalogEntry_BuildsAndRuns` сам подхватит новый механизм и проверит, что он загружается и движется.
+4. Запустить `dotnet test MechanismViewer.Tests`. Тест `EveryCatalogEntry_BuildsAndRuns` сам подхватит новый механизм и проверит, что он загружается и движется. Тест `PartsDoNotPassThroughEachOther` проведёт его по всему ходу и сообщит, какие детали, крепёж или мотор проходят друг сквозь друга и где.
 
 | Связь | Шарниры | Параметры |
 |---|---|---|
@@ -163,7 +163,7 @@ mechanism.json ──► CatalogLoader ──► MechanismDefinition
 | `cam` | вращение → сдвиг | `segments`: участки `angleDeg`, `riseMm`, `law` (`cycloidal` / `harmonic`) |
 | `geneva` | вращение → вращение | `slots` |
 
-Для ручных приводов в `driver` задаются `range` (упоры, ° или мм), `handForce` (предельное усилие руки, Н·м или Н) и `spring` (возвратная пружина). Для мотора можно включить `reverseAtLimits`.
+Для ручных приводов в `driver` задаются `range` (упоры, ° или мм), `handForce` (предельное усилие руки, Н·м или Н) и `spring` (возвратная пружина). Для мотора можно включить `reverseAtLimits`, задать `hubSeatMm` (торец ведущей детали, к которому её прижимает ступица мотора, по умолчанию 10 мм) или `shaftEndMm` (вал кончается внутри ступицы детали, ступицы мотора нет — для кривошипов, над которыми ходят шатуны).
 
 ## Ограничения
 

@@ -267,7 +267,7 @@ public partial class MainWindow : Window
 
         if (mechanism.Driver.Type == "motor")
         {
-            _motorVisual = new MotorModel(mechanism.Driver.MotorGapMm);
+            _motorVisual = new MotorModel(mechanism.Driver.MotorGapMm, mechanism.Driver.HubSeatMm, mechanism.Driver.ShaftEndMm);
             Viewport.Children.Add(_motorVisual.Stator);
             Viewport.Children.Add(_motorVisual.Rotor);
         }

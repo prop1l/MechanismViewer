@@ -59,7 +59,8 @@
       "type": "socket-screw",
       "diameterMm": 3,
       "lengthMm": 8,
-      "positions": [[-18, 22, -2], [18, 22, -2]],
+      // Головки — вне круга, который заметает кулачок (r 27).
+      "positions": [[-18, 26, -2], [18, 26, -2]],
       "axis": [0, 0, -1],
       "attachedTo": "frame"
     }

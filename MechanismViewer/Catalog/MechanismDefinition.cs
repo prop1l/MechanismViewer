@@ -70,6 +70,15 @@ public sealed record DriverSpec
     /// <summary>Для мотора: зазор от торца ведущей детали до фланца, мм.</summary>
     public double MotorGapMm { get; init; }
 
+    /// <summary>Для мотора: передний торец ведущей детали, к которому её прижимает ступица на валу, мм.</summary>
+    public double HubSeatMm { get; init; } = 10.0;
+
+    /// <summary>
+    /// Для мотора: вал кончается на этой высоте внутри ступицы ведущей детали, а ступицы мотора нет, мм.
+    /// Нужно, когда над деталью ходят шатуны (кривошип). Нет — вал со ступицей мотора.
+    /// </summary>
+    public double? ShaftEndMm { get; init; }
+
     /// <summary>Пределы хода [min, max] от начального положения: ° или мм. Нет — без упоров.</summary>
     public double[]? Range { get; init; }
 
