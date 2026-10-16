@@ -1,6 +1,7 @@
 using MechanismViewer.Catalog;
 using MechanismViewer.Physics;
 using MechanismViewer.Visuals;
+using System.Windows.Media;
 using System.Windows.Media.Media3D;
 
 namespace MechanismViewer.Tests;
@@ -24,6 +25,64 @@ public class SceneTests
         {
             throw new AggregateException(error);
         }
+    }
+
+    private static MechanismDefinition Load(string id) =>
+        CatalogLoader.Load(Path.Combine(CatalogLoader.DefaultRoot, id, CatalogLoader.FileName));
+
+    private static MeshGeometry3D[] Meshes(MechanismScene scene, string partId) =>
+        scene.Visuals
+            .Where(v => scene.ItemAt(v) == (partId, null))
+            .SelectMany(v => ((Model3DGroup)v.Content).Children.OfType<GeometryModel3D>())
+            .Select(g => (MeshGeometry3D)g.Geometry)
+            .ToArray();
+
+    [Fact]
+    public void IdenticalStlFiles_ShareOneFrozenMesh()
+    {
+        RunSta(() =>
+        {
+            // GearA2.stl и GearB2.stl побайтово одинаковы — сетка должна быть одна.
+            var scene = new MechanismScene(Load("spur-pair-36-36"));
+            MeshGeometry3D[] a = Meshes(scene, "gearA"), b = Meshes(scene, "gearB");
+
+            Assert.NotEmpty(a);
+            Assert.Equal(a, b);
+            Assert.All(a, m => Assert.True(m.IsFrozen));
+        });
+    }
+
+    [Fact]
+    public void ReopeningMechanism_ReusesMeshesWithoutParsing()
+    {
+        RunSta(() =>
+        {
+            // Те же экземпляры сеток — значит, второй раз ничего не разбиралось и не строилось.
+            var first = new MechanismScene(Load("geneva-4"));
+            var second = new MechanismScene(Load("geneva-4"));
+
+            Assert.All(Meshes(first, "star").Zip(Meshes(second, "star")), p => Assert.Same(p.First, p.Second));
+            GC.KeepAlive(first);
+        });
+    }
+
+    [Fact]
+    public void SharedMeshes_KeepPerPartHighlight()
+    {
+        RunSta(() =>
+        {
+            var scene = new MechanismScene(Load("spur-pair-36-36"));
+            scene.SetHover("gearA");
+
+            Color Glow(string id) => scene.Visuals
+                .Where(v => scene.ItemAt(v) == (id, null))
+                .SelectMany(v => ((Model3DGroup)v.Content).Children.OfType<GeometryModel3D>())
+                .Select(g => ((SolidColorBrush)((MaterialGroup)g.Material).Children.OfType<EmissiveMaterial>().Single().Brush).Color)
+                .First();
+
+            Assert.NotEqual(Colors.Transparent, Glow("gearA"));
+            Assert.Equal(Colors.Transparent, Glow("gearB"));
+        });
     }
 
     [Theory]

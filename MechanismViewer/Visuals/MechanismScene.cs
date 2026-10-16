@@ -38,7 +38,7 @@ public sealed class MechanismScene
         foreach (PartSpec part in mechanism.Parts.OrderBy(p => p.Joint.Type == "link"))
         {
             Color color = (Color)ColorConverter.ConvertFromString(part.Color);
-            var item = new PartItem(part, LoadStl(Path.Combine(mechanism.Directory, part.Stl), color));
+            var item = new PartItem(part, new ModelVisual3D { Content = Build(PartMeshes(mechanism, part), PartMaterial(color)) });
             _parts.Add(item);
             _byId.Add(part.Id, item);
         }
@@ -221,13 +221,15 @@ public sealed class MechanismScene
 
         if (spec.Stl is { } stl)
         {
-            ModelVisual3D single = LoadStl(Path.Combine(directory, stl), Color.FromRgb(60, 62, 68));
+            // Одна сетка на все точки установки: у каждой копии только своё положение.
+            IReadOnlyList<MeshGeometry3D> meshes = MeshCache.Load(Path.Combine(directory, stl));
+            Material material = PartMaterial(Color.FromRgb(60, 62, 68));
             var group = new Model3DGroup();
             var axis = new Vector3D(spec.Axis[0], spec.Axis[1], spec.Axis[2]);
             foreach (double[] p in positions)
             {
                 Frame f = Frame.Along(ToPoint(p), axis);
-                var placed = ((Model3D)single.Content).Clone();
+                var placed = Build(meshes, material);
                 placed.Transform = new MatrixTransform3D(new Matrix3D(
                     f.X.X, f.X.Y, f.X.Z, 0, f.Y.X, f.Y.Y, f.Y.Z, 0, f.Z.X, f.Z.Y, f.Z.Z, 0, p[0], p[1], p[2], 1));
                 group.Children.Add(placed);
@@ -245,30 +247,30 @@ public sealed class MechanismScene
         return new ModelVisual3D { Content = model };
     }
 
-    private static ModelVisual3D LoadStl(string path, Color color)
+    /// <summary>Сетки детали из STL, общие для всех одинаковых деталей (<see cref="MeshCache"/>); материал у каждой детали свой, чтобы подсвечивать её отдельно.</summary>
+    private static IReadOnlyList<MeshGeometry3D> PartMeshes(MechanismDefinition mechanism, PartSpec part) =>
+        MeshCache.Load(Path.Combine(mechanism.Directory, part.Stl));
+
+    private static Model3DGroup Build(IReadOnlyList<MeshGeometry3D> meshes, Material material)
     {
-        var reader = new StLReader();
-        Model3DGroup model = reader.Read(path)
-            ?? throw new InvalidDataException($"Не удалось прочитать STL: {path}");
-
-        // Основной материал + выключенная эмиссия для подсветки.
-        var material = new MaterialGroup
+        var model = new Model3DGroup();
+        foreach (MeshGeometry3D mesh in meshes)
         {
-            Children =
-            {
-                new DiffuseMaterial(new SolidColorBrush(color)),
-                new EmissiveMaterial(new SolidColorBrush(Colors.Transparent))
-            }
-        };
-
-        foreach (GeometryModel3D geometry in model.Children.OfType<GeometryModel3D>())
-        {
-            geometry.Material = material;
-            geometry.BackMaterial = material;
+            model.Children.Add(new GeometryModel3D(mesh, material) { BackMaterial = material });
         }
 
-        return new ModelVisual3D { Content = model };
+        return model;
     }
+
+    /// <summary>Основной материал + выключенная эмиссия для подсветки.</summary>
+    private static MaterialGroup PartMaterial(Color color) => new()
+    {
+        Children =
+        {
+            new DiffuseMaterial(new SolidColorBrush(color)),
+            new EmissiveMaterial(new SolidColorBrush(Colors.Transparent))
+        }
+    };
 
     private sealed class PartItem(PartSpec part, ModelVisual3D visual)
     {

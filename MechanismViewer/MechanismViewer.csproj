@@ -14,9 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Models\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <!-- Каталог механизмов: в каждой папке mechanism.json + STL деталей. -->
     <Content Include="Catalog\**\*.json;Catalog\**\*.stl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
