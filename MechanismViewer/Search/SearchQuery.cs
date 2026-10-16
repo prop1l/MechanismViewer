@@ -33,4 +33,31 @@ public sealed record SearchQuery
 
     /// <summary>Допуск на кинематические параметры, %.</summary>
     public double TolerancePercent { get; init; } = 20.0;
+
+    /// <summary>Ни одно требование не задано — подходит весь каталог.</summary>
+    public bool IsEmpty =>
+        Input is null && Output is null && Driver is null && Ratio is null && StrokeMm is null && AngleDeg is null
+        && OutputTorqueNm is null && OutputForceN is null && SpeedRadS is null && MaxEnvelopeMm is null;
+
+    /// <summary>Заданные требования одной строкой: «вращение → линейное · ход 25 мм · усилие 0,3 Н».</summary>
+    public string Summary()
+    {
+        var parts = new List<string>();
+        if (Input is not null || Output is not null)
+        {
+            parts.Add($"{(Input is null ? "любое" : MechanismSearch.MotionName(Input))} → {(Output is null ? "любое" : MechanismSearch.MotionName(Output))}");
+        }
+
+        if (Driver is not null) parts.Add($"привод: {MechanismSearch.DriverName(Driver)}");
+        if (Ratio is { } ratio) parts.Add($"передаточное {N(ratio)}");
+        if (StrokeMm is { } stroke) parts.Add($"ход {N(stroke)} мм");
+        if (AngleDeg is { } angle) parts.Add($"угол {N(angle)}°");
+        if (OutputTorqueNm is { } torque) parts.Add($"момент {N(torque)} Н·м");
+        if (OutputForceN is { } force) parts.Add($"усилие {N(force)} Н");
+        if (SpeedRadS is { } speed) parts.Add($"скорость {N(speed)} рад/с");
+        if (MaxEnvelopeMm is { } size) parts.Add($"габариты {string.Join("×", size.Select(N))} мм");
+        return string.Join(" · ", parts);
+    }
+
+    private static string N(double value) => value.ToString("0.###", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"));
 }

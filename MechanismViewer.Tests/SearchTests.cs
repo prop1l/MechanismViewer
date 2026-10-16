@@ -141,3 +141,69 @@ public class SearchTests
         Assert.InRange(button.Score, 90, 100);
     }
 }
+
+public class CardFilterTests
+{
+    private static readonly IReadOnlyList<MechanismDefinition> FullCatalog = CatalogLoader.LoadAll(CatalogLoader.DefaultRoot);
+
+    private static string[] Filter(string text) => FullCatalog
+        .Select(m => new SearchResultItem(new SearchResult(m, 100, []), showScore: false))
+        .Where(c => c.Matches(text))
+        .Select(c => c.Mechanism.Id)
+        .Order()
+        .ToArray();
+
+    [Theory]
+    [InlineData("рейка")]
+    [InlineData("рейкой")]
+    [InlineData("РЕЙКУ")]
+    public void WordForms_FindSameMechanisms(string word)
+    {
+        Assert.Contains("lever-rack-m15", Filter(word));
+        Assert.Contains("gearbox-slider-indicator", Filter(word));
+    }
+
+    [Fact]
+    public void EveryWordMustMatch()
+    {
+        Assert.Equal(["cam-flat-follower"], Filter("кулачок мотор"));
+        Assert.Empty(Filter("кулачок кнопка"));
+    }
+
+    [Fact]
+    public void EmptyFilter_ShowsWholeCatalog() => Assert.Equal(FullCatalog.Count, Filter("  ").Length);
+
+    [Fact]
+    public void Subtitle_ShowsMotionKeyFigureAndDriver()
+    {
+        MechanismDefinition worm = FullCatalog.Single(m => m.Id == "worm-1-20");
+        var card = new SearchResultItem(new SearchResult(worm, 100, []), showScore: false);
+
+        Assert.Equal("вращение → вращение · 1:20 · мотор", card.Subtitle);
+        Assert.Empty(card.Notes);
+    }
+}
+
+public class ThumbnailTests
+{
+    [Fact]
+    public void Thumbnail_DrawsMechanismOnTransparentBackground()
+    {
+        int painted = 0, total = 0;
+        var thread = new Thread(() =>
+        {
+            MechanismDefinition m = CatalogLoader.Load(Path.Combine(CatalogLoader.DefaultRoot, "geneva-4", CatalogLoader.FileName));
+            System.Windows.Media.Imaging.BitmapSource bitmap = MechanismViewer.Visuals.ThumbnailRenderer.Render(m, 84, 60);
+            var pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
+            bitmap.CopyPixels(pixels, bitmap.PixelWidth * 4, 0);
+            total = pixels.Length / 4;
+            for (int i = 3; i < pixels.Length; i += 4) if (pixels[i] > 0) painted++;
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+
+        // Механизм занимает заметную часть кадра, но не весь кадр (фон прозрачный).
+        Assert.InRange(painted, total / 5, total * 9 / 10);
+    }
+}

@@ -32,14 +32,14 @@
                               VerticalAlignment="Center" Margin="16,0,0,0" Foreground="White"
                               Checked="SpeedControlCheckBox_Changed" Unchecked="SpeedControlCheckBox_Changed" />
 
-                    <TextBlock Text="Скорость мотора, рад/с" VerticalAlignment="Center" Margin="16,0,6,0" />
-                    <Slider x:Name="SpeedSlider" Width="140" VerticalAlignment="Center"
+                    <TextBlock Text="Скорость, рад/с" ToolTip="Заданная скорость вала мотора" VerticalAlignment="Center" Margin="16,0,6,0" />
+                    <Slider x:Name="SpeedSlider" Width="120" VerticalAlignment="Center"
                             Minimum="0" Maximum="20" Value="6.28"
                             ValueChanged="SpeedSlider_ValueChanged" />
                 </StackPanel>
 
-                <TextBlock x:Name="LoadLabel" Text="Нагрузка на выходе, мН·м" VerticalAlignment="Center" Margin="16,0,6,0" />
-                <Slider x:Name="LoadSlider" Width="140" VerticalAlignment="Center"
+                <TextBlock x:Name="LoadLabel" Text="Нагрузка, мН·м" ToolTip="Нагрузка на выходном звене" VerticalAlignment="Center" Margin="16,0,6,0" />
+                <Slider x:Name="LoadSlider" Width="120" VerticalAlignment="Center"
                         Minimum="0" Maximum="10" Value="0"
                         ValueChanged="LoadSlider_ValueChanged" />
             </WrapPanel>
@@ -51,106 +51,149 @@
             </StatusBarItem>
         </StatusBar>
 
-        <!-- Поиск: требования → подходящие механизмы с оценкой и пояснениями. -->
-        <Border DockPanel.Dock="Left" Width="340" Background="#252A32" BorderBrush="#3B4655" BorderThickness="0,0,1,0">
+        <!-- Выбор механизма: каталог с миниатюрами и быстрым фильтром; подбор по параметрам — по запросу. -->
+        <Border DockPanel.Dock="Left" Width="360" Background="#252A32" BorderBrush="#3B4655" BorderThickness="0,0,1,0">
             <DockPanel Margin="12">
                 <StackPanel DockPanel.Dock="Top">
-                    <TextBlock Text="Поиск механизма" FontSize="16" FontWeight="Bold" Margin="0,0,0,8" />
+                    <DockPanel Margin="0,0,0,8">
+                        <!-- Соседний механизм в видимом списке (с учётом фильтра и подбора). -->
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button x:Name="PrevButton" Content="◀" Padding="9,3" Margin="0,0,4,0"
+                                    ToolTip="Предыдущий механизм (Ctrl+←)" Click="PrevButton_Click" />
+                            <Button x:Name="NextButton" Content="▶" Padding="9,3" Margin="0"
+                                    ToolTip="Следующий механизм (Ctrl+→)" Click="NextButton_Click" />
+                        </StackPanel>
+                        <TextBlock Text="Механизмы" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" />
+                        <TextBlock x:Name="CatalogCountText" Margin="8,0,0,0" VerticalAlignment="Center"
+                                   Foreground="{StaticResource SecondaryTextBrush}" FontSize="12" />
+                    </DockPanel>
 
+                    <!-- Быстрый фильтр: каждое слово ищется в названии, категории, подписи и описании. -->
                     <Grid>
-                        <Grid.Resources>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
-                                <Setter Property="Margin" Value="0,0,8,0" />
-                            </Style>
-                        </Grid.Resources>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="150" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="30" />
-                        </Grid.RowDefinitions>
-
-                        <TextBlock Grid.Row="0" Text="Движение на входе" />
-                        <ComboBox x:Name="InputCombo" Grid.Row="0" Grid.Column="1" Margin="0,2" SelectedIndex="0">
-                            <ComboBoxItem Content="Любое" />
-                            <ComboBoxItem Content="Вращение" Tag="rotation" />
-                            <ComboBoxItem Content="Линейное" Tag="linear" />
-                        </ComboBox>
-
-                        <TextBlock Grid.Row="1" Text="Движение на выходе" />
-                        <ComboBox x:Name="OutputCombo" Grid.Row="1" Grid.Column="1" Margin="0,2" SelectedIndex="0">
-                            <ComboBoxItem Content="Любое" />
-                            <ComboBoxItem Content="Вращение" Tag="rotation" />
-                            <ComboBoxItem Content="Линейное" Tag="linear" />
-                            <ComboBoxItem Content="Качание" Tag="oscillation" />
-                            <ComboBoxItem Content="Прерывистое вращение" Tag="intermittent" />
-                        </ComboBox>
-
-                        <TextBlock Grid.Row="2" Text="Привод" />
-                        <ComboBox x:Name="DriverCombo" Grid.Row="2" Grid.Column="1" Margin="0,2" SelectedIndex="0">
-                            <ComboBoxItem Content="Любой" />
-                            <ComboBoxItem Content="Мотор" Tag="motor" />
-                            <ComboBoxItem Content="Рычаг или ручка" Tag="manual" />
-                            <ComboBoxItem Content="Кнопка" Tag="button" />
-                        </ComboBox>
-
-                        <TextBlock Grid.Row="3" Text="Передаточное число" />
-                        <TextBox x:Name="RatioBox" Grid.Row="3" Grid.Column="1" Margin="0,2" ToolTip="|ω вых / ω вх|, например 0,5" />
-
-                        <TextBlock Grid.Row="4" Text="Ход, мм" />
-                        <TextBox x:Name="StrokeBox" Grid.Row="4" Grid.Column="1" Margin="0,2" />
-
-                        <TextBlock Grid.Row="5" Text="Угол поворота, °" />
-                        <TextBox x:Name="AngleBox" Grid.Row="5" Grid.Column="1" Margin="0,2" />
-
-                        <TextBlock Grid.Row="6" Text="Момент нагрузки, Н·м" />
-                        <TextBox x:Name="TorqueBox" Grid.Row="6" Grid.Column="1" Margin="0,2" ToolTip="Для вращающегося выхода" />
-
-                        <TextBlock Grid.Row="7" Text="Усилие нагрузки, Н" />
-                        <TextBox x:Name="ForceBox" Grid.Row="7" Grid.Column="1" Margin="0,2" ToolTip="Для поступательного выхода" />
-
-                        <TextBlock Grid.Row="8" Text="Скорость, рад/с" />
-                        <TextBox x:Name="SpeedBox" Grid.Row="8" Grid.Column="1" Margin="0,2" ToolTip="Механизм должен допускать эту скорость" />
-
-                        <TextBlock Grid.Row="9" Text="Габариты, мм" />
-                        <Grid Grid.Row="9" Grid.Column="1" Margin="0,2">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition />
-                            </Grid.ColumnDefinitions>
-                            <TextBox x:Name="SizeXBox" Grid.Column="0" ToolTip="Наибольший размер; ориентация не важна" />
-                            <TextBlock Grid.Column="1" Text="×" Margin="3,0" />
-                            <TextBox x:Name="SizeYBox" Grid.Column="2" />
-                            <TextBlock Grid.Column="3" Text="×" Margin="3,0" />
-                            <TextBox x:Name="SizeZBox" Grid.Column="4" />
-                        </Grid>
-
-                        <TextBlock Grid.Row="10" Text="Допуск, %" />
-                        <TextBox x:Name="ToleranceBox" Grid.Row="10" Grid.Column="1" Margin="0,2" Text="20" />
+                        <TextBox x:Name="FilterBox" Padding="26,6,26,6"
+                                 TextChanged="FilterBox_TextChanged" PreviewKeyDown="FilterBox_PreviewKeyDown"
+                                 ToolTip="Фильтр по названию, категории, движению и описанию. Esc — очистить, ↓ — к списку" />
+                        <TextBlock Text="⌕" FontSize="15" Margin="8,0,0,1" VerticalAlignment="Center"
+                                   Foreground="{StaticResource SecondaryTextBrush}" IsHitTestVisible="False" />
+                        <TextBlock x:Name="FilterPlaceholder" Text="Найти: «рейка», «кулачок», «линейное», «мотор»…"
+                                   Margin="27,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                   Foreground="#7A8494" />
+                        <Button x:Name="FilterClearButton" Content="✕" HorizontalAlignment="Right" Margin="0"
+                                Padding="8,2" Background="Transparent" BorderThickness="0" Visibility="Collapsed"
+                                ToolTip="Очистить фильтр" Click="FilterClearButton_Click" />
                     </Grid>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <Button x:Name="SearchButton" Content="Найти" IsDefault="True" Click="SearchButton_Click" />
-                        <Button Content="Очистить" Click="ClearSearchButton_Click" />
-                    </StackPanel>
+                    <Expander x:Name="QueryExpander" Margin="0,10,0,0" Foreground="White"
+                              Header="Подбор по параметрам">
+                        <StackPanel Margin="0,8,0,0">
+                            <Grid>
+                                <Grid.Resources>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                        <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+                                        <Setter Property="Margin" Value="0,0,8,0" />
+                                    </Style>
+                                </Grid.Resources>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                </Grid.RowDefinitions>
 
-                    <TextBlock x:Name="ResultsHeader" Margin="0,14,0,6" FontWeight="Bold" />
+                                <TextBlock Grid.Row="0" Text="Движение на входе" />
+                                <ComboBox x:Name="InputCombo" Grid.Row="0" Grid.Column="1" Margin="0,2" SelectedIndex="0">
+                                    <ComboBoxItem Content="Любое" />
+                                    <ComboBoxItem Content="Вращение" Tag="rotation" />
+                                    <ComboBoxItem Content="Линейное" Tag="linear" />
+                                </ComboBox>
+
+                                <TextBlock Grid.Row="1" Text="Движение на выходе" />
+                                <ComboBox x:Name="OutputCombo" Grid.Row="1" Grid.Column="1" Margin="0,2" SelectedIndex="0">
+                                    <ComboBoxItem Content="Любое" />
+                                    <ComboBoxItem Content="Вращение" Tag="rotation" />
+                                    <ComboBoxItem Content="Линейное" Tag="linear" />
+                                    <ComboBoxItem Content="Качание" Tag="oscillation" />
+                                    <ComboBoxItem Content="Прерывистое вращение" Tag="intermittent" />
+                                </ComboBox>
+
+                                <TextBlock Grid.Row="2" Text="Привод" />
+                                <ComboBox x:Name="DriverCombo" Grid.Row="2" Grid.Column="1" Margin="0,2" SelectedIndex="0">
+                                    <ComboBoxItem Content="Любой" />
+                                    <ComboBoxItem Content="Мотор" Tag="motor" />
+                                    <ComboBoxItem Content="Рычаг или ручка" Tag="manual" />
+                                    <ComboBoxItem Content="Кнопка" Tag="button" />
+                                </ComboBox>
+
+                                <TextBlock Grid.Row="3" Text="Передаточное число" />
+                                <TextBox x:Name="RatioBox" Grid.Row="3" Grid.Column="1" Margin="0,2" ToolTip="|ω вых / ω вх|, например 0,5" />
+
+                                <TextBlock Grid.Row="4" Text="Ход, мм" />
+                                <TextBox x:Name="StrokeBox" Grid.Row="4" Grid.Column="1" Margin="0,2" />
+
+                                <TextBlock Grid.Row="5" Text="Угол поворота, °" />
+                                <TextBox x:Name="AngleBox" Grid.Row="5" Grid.Column="1" Margin="0,2" />
+
+                                <TextBlock Grid.Row="6" Text="Момент нагрузки, Н·м" />
+                                <TextBox x:Name="TorqueBox" Grid.Row="6" Grid.Column="1" Margin="0,2" ToolTip="Для вращающегося выхода" />
+
+                                <TextBlock Grid.Row="7" Text="Усилие нагрузки, Н" />
+                                <TextBox x:Name="ForceBox" Grid.Row="7" Grid.Column="1" Margin="0,2" ToolTip="Для поступательного выхода" />
+
+                                <TextBlock Grid.Row="8" Text="Скорость, рад/с" />
+                                <TextBox x:Name="SpeedBox" Grid.Row="8" Grid.Column="1" Margin="0,2" ToolTip="Механизм должен допускать эту скорость" />
+
+                                <TextBlock Grid.Row="9" Text="Габариты, мм" />
+                                <Grid Grid.Row="9" Grid.Column="1" Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="SizeXBox" Grid.Column="0" ToolTip="Наибольший размер; ориентация не важна" />
+                                    <TextBlock Grid.Column="1" Text="×" Margin="3,0" />
+                                    <TextBox x:Name="SizeYBox" Grid.Column="2" />
+                                    <TextBlock Grid.Column="3" Text="×" Margin="3,0" />
+                                    <TextBox x:Name="SizeZBox" Grid.Column="4" />
+                                </Grid>
+
+                                <TextBlock Grid.Row="10" Text="Допуск, %" />
+                                <TextBox x:Name="ToleranceBox" Grid.Row="10" Grid.Column="1" Margin="0,2" Text="20" />
+                            </Grid>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button x:Name="SearchButton" Content="Подобрать" IsDefault="True" Click="SearchButton_Click" />
+                                <Button Content="Сбросить параметры" Click="ClearSearchButton_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Expander>
+
+                    <!-- Сводка активного запроса: видно, почему список отсортирован по оценке. -->
+                    <Border x:Name="QuerySummary" Visibility="Collapsed" Margin="0,8,0,0" Padding="8,6"
+                            Background="#22344A" BorderBrush="#3D5A7A" BorderThickness="1" CornerRadius="4">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="✕" Margin="6,0,0,0" Padding="6,1" VerticalAlignment="Top"
+                                    Background="Transparent" BorderThickness="0" ToolTip="Сбросить параметры подбора"
+                                    Click="ClearSearchButton_Click" />
+                            <TextBlock x:Name="QuerySummaryText" TextWrapping="Wrap" FontSize="12" />
+                        </DockPanel>
+                    </Border>
+
+                    <TextBlock x:Name="ResultsHeader" Margin="0,10,0,6" FontSize="12"
+                               Foreground="{StaticResource SecondaryTextBrush}" TextWrapping="Wrap" />
                 </StackPanel>
 
                 <Expander x:Name="RejectedExpander" DockPanel.Dock="Bottom" Margin="0,6,0,0" Foreground="White">
@@ -167,29 +210,56 @@
                     </ItemsControl>
                 </Expander>
 
-                <ListBox x:Name="ResultsList" SelectionChanged="ResultsList_SelectionChanged">
+                <ListBox x:Name="ResultsList" SelectionChanged="ResultsList_SelectionChanged"
+                         VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                         VirtualizingPanel.ScrollUnit="Pixel">
+                    <ListBox.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Margin="2,8,0,6" FontSize="11" FontWeight="Bold"
+                                               Foreground="{StaticResource SecondaryTextBrush}">
+                                        <Run Text="{Binding Name, Mode=OneWay}" />
+                                        <Run Text="·" />
+                                        <Run Text="{Binding ItemCount, Mode=OneWay}" />
+                                    </TextBlock>
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ListBox.GroupStyle>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel>
-                                <DockPanel>
-                                    <TextBlock DockPanel.Dock="Right" Text="{Binding ScoreText}" FontWeight="Bold"
-                                               Foreground="{Binding ScoreBrush}" Margin="8,0,0,0" />
-                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" TextWrapping="Wrap" />
-                                </DockPanel>
-                                <TextBlock Text="{Binding Subtitle}" Foreground="{StaticResource SecondaryTextBrush}"
-                                           FontSize="11" Margin="0,2,0,4" TextWrapping="Wrap" />
-                                <ItemsControl ItemsSource="{Binding Notes}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <DockPanel Margin="0,1">
-                                                <TextBlock DockPanel.Dock="Left" Text="{Binding Symbol}" Width="16"
-                                                           Foreground="{Binding Brush}" />
-                                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="12" />
-                                            </DockPanel>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
+                            <Grid ToolTip="{Binding Description}" ToolTipService.InitialShowDelay="700">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border Width="84" Height="60" CornerRadius="3" Background="#161A20" Margin="0,0,10,0"
+                                        VerticalAlignment="Top">
+                                    <Image Source="{Binding Thumbnail}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding ScoreText}" FontWeight="Bold"
+                                                   Foreground="{Binding ScoreBrush}" Margin="8,0,0,0"
+                                                   Visibility="{Binding ScoreVisibility}" />
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    </DockPanel>
+                                    <TextBlock Text="{Binding Subtitle}" Foreground="{StaticResource SecondaryTextBrush}"
+                                               FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap" />
+                                    <ItemsControl ItemsSource="{Binding Notes}" Visibility="{Binding NotesVisibility}" Margin="0,4,0,0">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <DockPanel Margin="0,1">
+                                                    <TextBlock DockPanel.Dock="Left" Text="{Binding Symbol}" Width="16"
+                                                               Foreground="{Binding Brush}" />
+                                                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="12" />
+                                                </DockPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>

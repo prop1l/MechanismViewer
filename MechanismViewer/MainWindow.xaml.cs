@@ -4,10 +4,12 @@ using MechanismViewer.Interaction;
 using MechanismViewer.Physics;
 using MechanismViewer.Search;
 using MechanismViewer.Visuals;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
@@ -23,6 +25,9 @@ public partial class MainWindow : Window
     private readonly FreeFlyCamera _freeCamera;
 
     private IReadOnlyList<MechanismDefinition> _catalog = [];
+    private List<SearchResultItem> _items = [];
+    private SearchQuery _query = new();
+    private readonly Dictionary<string, ImageSource> _thumbnails = new();
     private MechanismSimulator? _physics;
     private double _loadScale = 1e-3;
     private MechanismScene? _scene;
@@ -63,10 +68,13 @@ public partial class MainWindow : Window
                 throw new FileNotFoundException($"Каталог механизмов пуст: {CatalogLoader.DefaultRoot}");
             }
 
-            // Пустой запрос — весь каталог; открывается механизм по умолчанию.
-            ShowSearchResults(MechanismSearch.Run(_catalog, new SearchQuery()), DefaultMechanismId);
+            CatalogCountText.Text = $"{_catalog.Count}";
+
+            // Пустой запрос — весь каталог по категориям; открывается механизм по умолчанию.
+            ShowSearchResults(MechanismSearch.Run(_catalog, new SearchQuery()), new SearchQuery(), DefaultMechanismId);
             _lastFrameTime = DateTime.UtcNow;
             _renderTimer.Start();
+            RenderThumbnails();
         }
         catch (Exception ex)
         {
@@ -74,6 +82,39 @@ public partial class MainWindow : Window
             MessageBox.Show(this, ex.Message, "Ошибка",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    /// <summary>
+    /// Миниатюры рисуются по одной в простое интерфейса: окно открывается сразу, картинки появляются следом.
+    /// </summary>
+    private void RenderThumbnails()
+    {
+        var pending = new Queue<MechanismDefinition>(_catalog.Where(m => !_thumbnails.ContainsKey(m.Id)));
+
+        void Next()
+        {
+            if (!pending.TryDequeue(out MechanismDefinition? mechanism))
+            {
+                return;
+            }
+
+            try
+            {
+                _thumbnails[mechanism.Id] = ThumbnailRenderer.Render(mechanism, 84, 60);
+                foreach (SearchResultItem item in _items.Where(i => i.Mechanism.Id == mechanism.Id))
+                {
+                    item.Thumbnail = _thumbnails[mechanism.Id];
+                }
+            }
+            catch (Exception)
+            {
+                // Без миниатюры карточка остаётся рабочей; ошибку модели покажет открытие механизма.
+            }
+
+            Dispatcher.BeginInvoke(Next, DispatcherPriority.ApplicationIdle);
+        }
+
+        Dispatcher.BeginInvoke(Next, DispatcherPriority.ApplicationIdle);
     }
 
     private void SearchButton_Click(object sender, RoutedEventArgs e)
@@ -84,7 +125,12 @@ public partial class MainWindow : Window
             return;
         }
 
-        ShowSearchResults(MechanismSearch.Run(_catalog, query), preferredId: null);
+        ShowSearchResults(MechanismSearch.Run(_catalog, query), query, preferredId: null);
+        if (!query.IsEmpty)
+        {
+            // Форма уходит, освобождая место списку; что задано — видно в сводке.
+            QueryExpander.IsExpanded = false;
+        }
     }
 
     private void ClearSearchButton_Click(object sender, RoutedEventArgs e)
@@ -100,7 +146,7 @@ public partial class MainWindow : Window
         }
 
         ToleranceBox.Text = "20";
-        ShowSearchResults(MechanismSearch.Run(_catalog, new SearchQuery()), _scene?.Mechanism.Id);
+        ShowSearchResults(MechanismSearch.Run(_catalog, new SearchQuery()), new SearchQuery(), _scene?.Mechanism.Id);
     }
 
     private IEnumerable<TextBox> NumberBoxes =>
@@ -161,31 +207,134 @@ public partial class MainWindow : Window
         return valid ? query : null;
     }
 
-    /// <summary>Показывает результаты и открывает <paramref name="preferredId"/> (если найден) или лучший результат.</summary>
-    private void ShowSearchResults(SearchOutcome outcome, string? preferredId)
+    /// <summary>
+    /// Показывает результаты и открывает <paramref name="preferredId"/> (если найден) или первый результат.
+    /// Без запроса — весь каталог по категориям; с запросом — по оценке, с пояснениями.
+    /// </summary>
+    private void ShowSearchResults(SearchOutcome outcome, SearchQuery query, string? preferredId)
     {
-        List<SearchResultItem> items = outcome.Results.Select(r => new SearchResultItem(r)).ToList();
-        ResultsList.ItemsSource = items;
+        _query = query;
+        _items = outcome.Results.Select(r => new SearchResultItem(r, showScore: !query.IsEmpty)
+        {
+            Thumbnail = _thumbnails.GetValueOrDefault(r.Mechanism.Id)
+        }).ToList();
 
-        ResultsHeader.Text = items.Count == 0
-            ? "Ничего не найдено — ослабьте требования"
-            : $"Найдено: {items.Count} из {_catalog.Count}";
+        ICollectionView view = CollectionViewSource.GetDefaultView(_items);
+        view.Filter = o => o is SearchResultItem item && item.Matches(FilterBox.Text);
+        if (query.IsEmpty)
+        {
+            view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(SearchResultItem.Category)));
+        }
+
+        ResultsList.ItemsSource = view;
+
+        QuerySummary.Visibility = query.IsEmpty ? Visibility.Collapsed : Visibility.Visible;
+        QuerySummaryText.Text = query.IsEmpty ? "" : $"Подбор: {query.Summary()}";
 
         RejectedList.ItemsSource = outcome.Rejected.Select(r => new RejectedItem(r.Mechanism.Name, r.Reason)).ToList();
         RejectedExpander.Header = $"Не подошли: {outcome.Rejected.Count}";
         RejectedExpander.Visibility = outcome.Rejected.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
-        SearchResultItem? selected = items.FirstOrDefault(i => i.Mechanism.Id == preferredId) ?? items.FirstOrDefault();
+        UpdateResultsHeader();
+
+        SearchResultItem? selected = _items.FirstOrDefault(i => i.Mechanism.Id == preferredId && view.Contains(i))
+            ?? view.Cast<SearchResultItem>().FirstOrDefault();
         ResultsList.SelectedItem = selected; // → ResultsList_SelectionChanged → ShowMechanism
 
         if (selected is not null)
         {
             ResultsList.ScrollIntoView(selected);
         }
-        else
+        else if (_items.Count == 0)
         {
             SetStatus("По запросу ничего не найдено");
         }
+    }
+
+    private void UpdateResultsHeader()
+    {
+        int shown = ResultsList.Items.Count;
+        string filter = FilterBox.Text.Trim();
+
+        ResultsHeader.Text = (_query.IsEmpty, _items.Count, shown) switch
+        {
+            (false, 0, _) => "По параметрам ничего не подошло — ослабьте требования",
+            (_, _, 0) => $"По «{filter}» ничего нет",
+            (true, _, _) when filter.Length == 0 => "Все механизмы по категориям",
+            (true, _, _) => $"Найдено по «{filter}»: {shown}",
+            (false, _, _) when filter.Length == 0 => $"Подходят {_items.Count} из {_catalog.Count}, лучшие — выше",
+            _ => $"Подходят {_items.Count} из {_catalog.Count}, по «{filter}»: {shown}"
+        };
+    }
+
+    private void FilterBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        bool empty = FilterBox.Text.Length == 0;
+        FilterPlaceholder.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+        FilterClearButton.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
+
+        if (ResultsList.ItemsSource is not ICollectionView view)
+        {
+            return;
+        }
+
+        view.Refresh();
+        UpdateResultsHeader();
+
+        // Открытый механизм остаётся выбранным, если он виден; иначе выбор не трогаем — сцена не прыгает при наборе.
+        if (_items.FirstOrDefault(i => ReferenceEquals(i.Mechanism, _scene?.Mechanism)) is { } current && view.Contains(current))
+        {
+            ResultsList.SelectedItem = current;
+        }
+    }
+
+    private void FilterBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && FilterBox.Text.Length > 0)
+        {
+            FilterBox.Clear();
+            e.Handled = true;
+        }
+        else if (e.Key is Key.Down or Key.Enter && ResultsList.Items.Count > 0)
+        {
+            // Enter открывает первый найденный, ↓ переводит фокус в список для выбора стрелками.
+            if (e.Key == Key.Enter || ResultsList.SelectedItem is null || !ResultsList.Items.Contains(ResultsList.SelectedItem))
+            {
+                ResultsList.SelectedIndex = 0;
+            }
+
+            if (e.Key == Key.Down)
+            {
+                (ResultsList.ItemContainerGenerator.ContainerFromItem(ResultsList.SelectedItem) as ListBoxItem)?.Focus();
+            }
+
+            e.Handled = true;
+        }
+    }
+
+    private void FilterClearButton_Click(object sender, RoutedEventArgs e)
+    {
+        FilterBox.Clear();
+        FilterBox.Focus();
+    }
+
+    private void PrevButton_Click(object sender, RoutedEventArgs e) => Step(-1);
+
+    private void NextButton_Click(object sender, RoutedEventArgs e) => Step(+1);
+
+    /// <summary>Соседний механизм в видимом списке, по кругу.</summary>
+    private void Step(int delta)
+    {
+        int count = ResultsList.Items.Count;
+        if (count == 0)
+        {
+            return;
+        }
+
+        int index = ResultsList.SelectedItem is { } selected ? ResultsList.Items.IndexOf(selected) : -1;
+        index = index < 0 ? (delta > 0 ? 0 : count - 1) : ((index + delta) % count + count) % count;
+        ResultsList.SelectedIndex = index;
+        ResultsList.ScrollIntoView(ResultsList.SelectedItem);
     }
 
     private void ResultsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -252,7 +401,7 @@ public partial class MainWindow : Window
         LoadSlider.Maximum = linearOutput
             ? mechanism.Specs.MaxForceN ?? 1.0
             : (mechanism.Specs.MaxTorqueNm ?? 0.01) * 1e3;
-        LoadLabel.Text = linearOutput ? "Нагрузка на выходе, Н" : "Нагрузка на выходе, мН·м";
+        LoadLabel.Text = linearOutput ? "Нагрузка, Н" : "Нагрузка, мН·м";
 
         // Привод принимает текущие значения органов управления.
         physics.Motor.SupplyVoltage = VoltageSlider.Value;
@@ -516,7 +665,13 @@ public partial class MainWindow : Window
     {
         Key key = e.Key == Key.System ? e.SystemKey : e.Key;
 
-        if (key == Key.F && !e.IsRepeat)
+        // Ctrl+←/→ — соседний механизм (кроме полей ввода, где это переход по словам).
+        if (key is Key.Left or Key.Right && Keyboard.Modifiers == ModifierKeys.Control && e.OriginalSource is not TextBox)
+        {
+            Step(key == Key.Right ? +1 : -1);
+            e.Handled = true;
+        }
+        else if (key == Key.F && !e.IsRepeat)
         {
             _freeCamera.Toggle();
             e.Handled = true;
