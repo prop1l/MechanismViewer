@@ -6,7 +6,7 @@
 
 **Стек:** C# · .NET 10 · WPF · [HelixToolkit.Wpf](https://github.com/helix-toolkit/helix-toolkit) · xUnit
 
-![Четырёхзвенник в работе: слева поиск, в центре модель, справа спецификация крепежа](docs/screenshots/four-bar-running.png)
+![Четырёхзвенник в работе: слева каталог с миниатюрами, в центре модель, справа спецификация крепежа](docs/screenshots/four-bar-running.png)
 
 ## Возможности
 
