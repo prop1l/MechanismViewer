@@ -30,6 +30,8 @@ public class CollisionTests(ITestOutputHelper output)
         ["screw-nut-tr8"] = [("screw", "nut"), ("nut", "frame"), ("screw", "frame")],
         // Ось колеса в стойках, конец червяка в передней опоре.
         ["worm-1-20"] = [("wheel", "frame"), ("worm", "frame")],
+        // Оси блок-шестерни, колеса и указателя — часть основания.
+        ["gearbox-slider-indicator"] = [("cluster", "frame"), ("crankGear", "frame"), ("indicator", "frame")],
     };
 
     private static void RunSta(Action action)
