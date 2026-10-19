@@ -166,6 +166,12 @@ public sealed record JointSpec
     public double Phase { get; init; }
 
     public LinkSpec? Link { get; init; }
+
+    /// <summary>
+    /// Деталь, на которой стоит этот шарнир (каретка несёт ползун, ползун — присоску): origin и axis заданы
+    /// в её системе координат, и деталь движется вместе с ней. Нет — шарнир на стойке, координаты мировые.
+    /// </summary>
+    public string? Parent { get; init; }
 }
 
 /// <summary>
@@ -196,7 +202,8 @@ public sealed record GearSpec
 
 /// <summary>
 /// Связь координат двух деталей: from — ближе к приводу, to — ведомая.
-/// gear (вращение→вращение), rack и screw (вращение→сдвиг), crank-slider (кривошип→ползун).
+/// gear (вращение→вращение), rack и screw (вращение→сдвиг), crank-slider (кривошип→ползун),
+/// yoke (синусная кулиса), slotted-lever (качающаяся кулиса), wedge (клин), belt (ремень).
 /// </summary>
 public sealed record CouplingSpec
 {
@@ -204,7 +211,7 @@ public sealed record CouplingSpec
     public required string From { get; init; }
     public required string To { get; init; }
 
-    /// <summary>gear: dθ_to/dθ_from. Если не задано — −z_from/z_to по числу зубьев.</summary>
+    /// <summary>gear, belt: dθ_to/dθ_from. Для gear по умолчанию — −z_from/z_to по числу зубьев.</summary>
     public double? Ratio { get; init; }
 
     /// <summary>rack: радиус делительной окружности шестерни, мм (по умолчанию из gear детали from).</summary>
@@ -213,7 +220,10 @@ public sealed record CouplingSpec
     /// <summary>screw: ход резьбы за оборот, мм (знак задаёт направление).</summary>
     public double? LeadMm { get; init; }
 
-    /// <summary>crank-slider: радиус кривошипа, длина шатуна, смещение оси ползуна (дезаксиал), мм.</summary>
+    /// <summary>
+    /// crank-slider: радиус кривошипа, длина шатуна, смещение оси ползуна (дезаксиал), мм.
+    /// yoke, slotted-lever: радиус кривошипа (для эллипсографа — длина звена между ползунами).
+    /// </summary>
     public double? CrankMm { get; init; }
     public double? RodMm { get; init; }
     public double OffsetMm { get; init; }
@@ -224,6 +234,9 @@ public sealed record CouplingSpec
 
     /// <summary>four-bar: сборка (+1 или −1) — по какую сторону от линии «палец кривошипа — ось коромысла» лежит шарнир.</summary>
     public int Branch { get; init; } = 1;
+
+    /// <summary>wedge: угол клина, ° — толкатель поднимается на tg α за миллиметр хода клина.</summary>
+    public double? AngleDeg { get; init; }
 
     /// <summary>geneva: число пазов креста.</summary>
     public int? Slots { get; init; }
@@ -304,10 +317,23 @@ public sealed record ShapeSpec
     public CamShape? Cam { get; init; }
     public GenevaShape? GenevaStar { get; init; }
     public GenevaShape? GenevaDisk { get; init; }
+    public BeltShape? Belt { get; init; }
 
     [JsonIgnore]
     public int KindCount =>
-        new object?[] { Box, Cylinder, Polygon, Gear, Rack, RingX, Thread, Cam, GenevaStar, GenevaDisk }.Count(k => k is not null);
+        new object?[] { Box, Cylinder, Polygon, Gear, Rack, RingX, Thread, Cam, GenevaStar, GenevaDisk, Belt }.Count(k => k is not null);
+}
+
+/// <summary>
+/// Открытый плоский ремень вокруг двух шкивов: pulleys — [[x, y, r], [x, y, r]], r — радиус под ремнём;
+/// ремень толщиной thickness охватывает шкивы снаружи и идёт по их общим внешним касательным.
+/// </summary>
+public sealed record BeltShape
+{
+    public required double[][] Pulleys { get; init; }
+    public required double Thickness { get; init; }
+    public required double[] Z { get; init; }
+    public int Segments { get; init; } = 48;
 }
 
 /// <summary>Цилиндр с осью Z: центр at, радиус r, сегментов по окружности.</summary>
@@ -374,6 +400,13 @@ public sealed record ThreadShape
 public sealed record CamShape
 {
     public required double[] Z { get; init; }
+
+    /// <summary>Толкатель, если от детали идёт несколько связей cam (несколько кулачков на одном валу).</summary>
+    public string? Follower { get; init; }
+
+    /// <summary>Радиус ролика толкателя, мм; 0 — плоский толкатель. Начало координат роликового толкателя — центр ролика.</summary>
+    public double RollerRadius { get; init; }
+
     public int Samples { get; init; } = 720;
 }
 

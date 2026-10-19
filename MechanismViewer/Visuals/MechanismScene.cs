@@ -35,8 +35,8 @@ public sealed class MechanismScene
     {
         Mechanism = mechanism;
 
-        // Шатуны — в конце: их положение зависит от уже расставленных деталей.
-        foreach (PartSpec part in mechanism.Parts.OrderBy(p => p.Joint.Type == "link"))
+        // Несущие детали — раньше тех, что стоят на них; шатуны — в конце: их положение зависит от уже расставленных деталей.
+        foreach (PartSpec part in mechanism.Parts.OrderBy(p => p.Joint.Type == "link").ThenBy(p => Depth(mechanism, p)))
         {
             Color color = (Color)ColorConverter.ConvertFromString(part.Color);
             var item = new PartItem(part, new ModelVisual3D { Content = Build(PartMeshes(mechanism, part), PartMaterial(color)) });
@@ -75,6 +75,12 @@ public sealed class MechanismScene
                 "link" => LinkPose(joint),
                 _ => JointPose(joint, 0.0)
             };
+            if (joint.Parent is { } parent)
+            {
+                item.Pose *= _byId[parent].Pose;
+            }
+
+
             item.Visual.Transform = new MatrixTransform3D(item.Pose);
         }
 
@@ -211,6 +217,10 @@ public sealed class MechanismScene
     }
 
     private static Point3D ToPoint(double[] p) => new(p[0], p[1], p[2]);
+
+    /// <summary>Сколько деталей несут эту (цепочка parent); циклы отсекает загрузчик.</summary>
+    private static int Depth(MechanismDefinition mechanism, PartSpec part) =>
+        part.Joint.Parent is { } parent ? 1 + Depth(mechanism, mechanism.Part(parent)) : 0;
 
     /// <summary>Модель позиции спецификации: свой STL в каждой точке установки или стандартный крепёж; null — только в спецификации.</summary>
     private static ModelVisual3D? BuildFastener(FastenerSpec spec, string directory)

@@ -56,7 +56,7 @@ public static class ShapeBuilder
             }
             else if (s.Cam is { } cam)
             {
-                mesh.Prism(CamOutline(mechanism, part, cam.Samples), cam.Z[0], cam.Z[1]);
+                mesh.Prism(CamOutline(mechanism, part, cam), cam.Z[0], cam.Z[1]);
             }
             else if (s.GenevaStar is { } star)
             {
@@ -65,6 +65,13 @@ public static class ShapeBuilder
             else if (s.GenevaDisk is { } disk)
             {
                 mesh.Prism(Geneva(disk).Disk, disk.Z[0], disk.Z[1]);
+            }
+            else if (s.Belt is { Pulleys: [[double ax, double ay, double ar], [double bx, double by, double br]] } belt)
+            {
+                foreach (List<Point> piece in Belt(new Point(ax, ay), ar, new Point(bx, by), br, belt.Thickness, belt.Segments))
+                {
+                    mesh.Prism(piece, belt.Z[0], belt.Z[1]);
+                }
             }
             else
             {
@@ -76,13 +83,15 @@ public static class ShapeBuilder
     }
 
     /// <summary>
-    /// Контур кулачка — огибающая положений тарелки толкателя: H(ψ)·n(ψ) + H'(ψ)·t(ψ), H = r_b + s(θ), θ = γ − ψ.
-    /// γ — направление на толкатель, ψ — угол в системе кулачка.
+    /// Контур кулачка. Плоский толкатель — огибающая положений тарелки: H(ψ)·u(ψ) − H'·t(ψ), H = r_b + s(θ), θ = γ − ψ.
+    /// Роликовый — центровой профиль P(ψ) = H·u(ψ), сдвинутый внутрь на радиус ролика по нормали.
+    /// γ — направление на толкатель (начало его координат — точка касания или центр ролика), ψ — угол в системе кулачка.
     /// </summary>
-    private static List<Point> CamOutline(MechanismDefinition mechanism, PartSpec part, int samples)
+    private static List<Point> CamOutline(MechanismDefinition mechanism, PartSpec part, CamShape shape)
     {
-        CouplingSpec spec = mechanism.Couplings.FirstOrDefault(c => c.Type == "cam" && c.From == part.Id)
-            ?? throw new InvalidDataException($"Деталь «{part.Id}»: shape cam требует связи cam от этой детали");
+        int samples = shape.Samples;
+        CouplingSpec spec = mechanism.Couplings.FirstOrDefault(c => c.Type == "cam" && c.From == part.Id && (shape.Follower is null || c.To == shape.Follower))
+            ?? throw new InvalidDataException($"Деталь «{part.Id}»: shape cam требует связи cam от этой детали{(shape.Follower is { } f ? $" к «{f}»" : "")}");
         PartSpec follower = mechanism.Part(spec.To);
         double theta0 = part.Joint.Phase * Math.PI / 180.0;
         var law = new CamCoupling(part.Id, follower.Id,
@@ -97,7 +106,20 @@ public static class ShapeBuilder
             double psi = 2 * Math.PI * i / samples;
             double q = gamma - psi - theta0;
             double h = rb + law.Evaluate(q) * 1e3, v = law.Derivative(q) * 1e3;
-            outline.Add(new Point(h * Math.Cos(psi) + v * Math.Sin(psi), h * Math.Sin(psi) - v * Math.Cos(psi)));
+            var u = new Vector(Math.Cos(psi), Math.Sin(psi));
+            var t = new Vector(-u.Y, u.X);
+            if (shape.RollerRadius > 0)
+            {
+                // dP/dψ = −v·u + h·t (dθ/dψ = −1); наружная нормаль при обходе против часовой — касательная, повёрнутая на −90°.
+                Vector tangent = -v * u + h * t;
+                var normal = new Vector(tangent.Y, -tangent.X);
+                normal.Normalize();
+                outline.Add(new Point(0, 0) + h * u - shape.RollerRadius * normal);
+            }
+            else
+            {
+                outline.Add(new Point(0, 0) + h * u - v * t);
+            }
         }
 
         return outline;
@@ -161,6 +183,51 @@ public static class ShapeBuilder
         }
 
         return (star, disk);
+    }
+
+    /// <summary>
+    /// Открытый ремень: две дуги охвата и две ветви по внешним касательным. Нормаль касательной n
+    /// составляет с линией центров угол π/2 − β, sin β = (r1 − r2)/D: шкив 1 охвачен на π + 2β, шкив 2 — на π − 2β.
+    /// Кольцо не простой многоугольник, поэтому ремень собран из четырёх кусков.
+    /// </summary>
+    private static List<List<Point>> Belt(Point c1, double r1, Point c2, double r2, double t, int segments)
+    {
+        Vector d = c2 - c1;
+        double beta = Math.Asin((r1 - r2) / d.Length), axis = Math.Atan2(d.Y, d.X);
+        double a = Math.PI / 2 - beta;
+
+        static Vector Dir(double angle) => new(Math.Cos(angle), Math.Sin(angle));
+
+        List<Point> Arc(Point c, double r, double from, double sweep)
+        {
+            int n = Math.Max(2, (int)Math.Ceiling(segments * sweep / (2 * Math.PI)));
+            var outer = new List<Point>();
+            var inner = new List<Point>();
+            for (int i = 0; i <= n; i++)
+            {
+                Vector u = Dir(from + sweep * i / n);
+                outer.Add(c + u * (r + t));
+                inner.Add(c + u * r);
+            }
+
+            inner.Reverse();
+            outer.AddRange(inner);
+            return outer;
+        }
+
+        List<Point> Span(double angle)
+        {
+            Vector n = Dir(angle);
+            return [c1 + n * r1, c2 + n * r2, c2 + n * (r2 + t), c1 + n * (r1 + t)];
+        }
+
+        return
+        [
+            Arc(c1, r1, axis + a, 2 * Math.PI - 2 * a),
+            Arc(c2, r2, axis - a, 2 * a),
+            Span(axis + a),
+            Span(axis - a)
+        ];
     }
 
     private sealed class Builder(string axis)

@@ -113,10 +113,11 @@ public sealed class KinematicSolver
 
         string[] allowed = spec.Type switch
         {
-            "gear" or "four-bar" or "geneva" => ["revolute→revolute"],
+            "gear" or "four-bar" or "geneva" or "slotted-lever" or "belt" => ["revolute→revolute"],
             // Рейка может вести шестерню (кнопка, толкатель) или шестерня — рейку.
             "rack" => ["revolute→prismatic", "prismatic→revolute"],
-            "screw" or "crank-slider" or "cam" => ["revolute→prismatic"],
+            "screw" or "crank-slider" or "cam" or "yoke" => ["revolute→prismatic"],
+            "wedge" => ["prismatic→prismatic"],
             _ => throw new InvalidDataException($"Механизм «{mechanism.Id}»: неизвестный тип связи «{spec.Type}»")
         };
 
@@ -136,6 +137,11 @@ public sealed class KinematicSolver
             "four-bar" => FourBar(spec, from, to, mechanism),
             "geneva" => Geneva(spec, from, to, mechanism),
             "cam" => Cam(spec, from, to, mechanism),
+            "yoke" => new YokeCoupling(from.Id, to.Id, Mm(spec.CrankMm ?? Missing(mechanism, spec, "crankMm")),
+                (from.Joint.Phase * Math.PI / 180.0) - Math.Atan2(to.Joint.Axis[1], to.Joint.Axis[0])),
+            "slotted-lever" => SlottedLever(spec, from, to, mechanism),
+            "wedge" => new WedgeCoupling(from.Id, to.Id, (spec.AngleDeg ?? Missing(mechanism, spec, "angleDeg")) * Math.PI / 180.0),
+            "belt" => new BeltCoupling(from.Id, to.Id, spec.Ratio ?? Missing(mechanism, spec, "ratio")),
             _ => new CrankSliderCoupling(from.Id, to.Id,
                 Mm(spec.CrankMm ?? Missing(mechanism, spec, "crankMm")),
                 Mm(spec.RodMm ?? Missing(mechanism, spec, "rodMm")),
@@ -167,6 +173,25 @@ public sealed class KinematicSolver
         {
             throw new InvalidDataException(
                 $"Механизм «{mechanism.Id}»: начальный угол коромысла «{rocker.Id}» должен быть {expected:0.###}° (phase), а задан {rocker.Joint.Phase}°");
+        }
+
+        return coupling;
+    }
+
+    private static ICoupling SlottedLever(CouplingSpec spec, PartSpec crank, PartSpec rocker, MechanismDefinition mechanism)
+    {
+        // Углы отсчитываются от линии «ось коромысла → ось кривошипа».
+        (double distance, double lineAngle) = Between(rocker, crank);
+        var coupling = new SlottedLeverCoupling(crank.Id, rocker.Id,
+            Mm(spec.CrankMm ?? Missing(mechanism, spec, "crankMm")),
+            distance, crank.Joint.Phase * Math.PI / 180.0 - lineAngle);
+
+        // Прорезь коромысла строится вдоль его +X: начальный угол должен смотреть на палец кривошипа.
+        double expected = (lineAngle + coupling.InitialRockerAngle) * 180.0 / Math.PI;
+        if (Math.Abs(Math.IEEERemainder(expected - rocker.Joint.Phase, 360.0)) > 0.5)
+        {
+            throw new InvalidDataException(
+                $"Механизм «{mechanism.Id}»: начальный угол кулисы «{rocker.Id}» должен быть {expected:0.###}° (phase), а задан {rocker.Joint.Phase}°");
         }
 
         return coupling;

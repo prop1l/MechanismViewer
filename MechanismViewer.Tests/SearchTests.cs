@@ -174,7 +174,8 @@ public class CardFilterTests
     {
         string[] found = Filter("кулачок мотор");
         Assert.Contains("cam-flat-follower", found);
-        Assert.All(found, id => Assert.Equal("Кулачковые механизмы", FullCatalog.Single(m => m.Id == id).Category));
+        // Кулачки бывают и вне своей категории (перекладчик в «Захватах»): проверяем по связям.
+        Assert.All(found, id => Assert.Contains(FullCatalog.Single(m => m.Id == id).Couplings, c => c.Type == "cam"));
         Assert.Empty(Filter("кулачок кнопка"));
     }
 

@@ -129,5 +129,37 @@ public static class CatalogLoader
                 throw new InvalidDataException($"{path}: шатун «{part.Id}» должен соединять детали с шарнирами, а не другие шатуны");
             }
         }
+
+        foreach (PartSpec part in m.Parts.Where(p => p.Joint.Parent is not null))
+        {
+            if (part.Joint.Type == "link" || part.Id == m.Driver.Part)
+            {
+                throw new InvalidDataException($"{path}: у шатуна и ведущей детали «{part.Id}» не может быть parent");
+            }
+
+            // Цепочка несущих деталей должна кончаться на стойке.
+            var seen = new HashSet<string> { part.Id };
+            for (string? parent = part.Joint.Parent; parent is not null; parent = m.Part(parent).Joint.Parent)
+            {
+                if (!ids.Contains(parent))
+                {
+                    throw new InvalidDataException($"{path}: у детали «{part.Id}» parent «{parent}» — нет такой детали");
+                }
+
+                if (!seen.Add(parent) || m.Part(parent).Joint.Type == "link")
+                {
+                    throw new InvalidDataException($"{path}: деталь «{part.Id}» стоит на шатуне или на самой себе (parent)");
+                }
+            }
+        }
+
+        // Эти связи считают геометрию по мировым координатам осей.
+        foreach (CouplingSpec c in m.Couplings.Where(c => c.Type is "four-bar" or "geneva" or "slotted-lever" or "cam"))
+        {
+            if (m.Part(c.From).Joint.Parent is not null || c.Type != "cam" && m.Part(c.To).Joint.Parent is not null)
+            {
+                throw new InvalidDataException($"{path}: детали связи {c.Type} {c.From}→{c.To} должны стоять на стойке (без parent)");
+            }
+        }
     }
 }
